@@ -1,62 +1,184 @@
 <?php
 // $Id$
 
+// Legal module
+// Robert Castelo
+// services@cortextcommunications.com
+
 function legal_help($section = 'admin/help#legal') {
   $output = '';
 
   switch ($section) {
-    case 'admin/help#legal':
-      $output .= "<p>Adds Terms & Conditions statement to registration page, requires visitor to accept T&C to register.</p>";
-      $output .= "<p>When a user creates an account you can require them to accept your Terms & Conditions for use of the site.</p>";
-      break;
     case 'admin/modules#description':
       $output = t('Adds Terms & Conditions statement to registration page.');
       break;
-    case 'admin/system/modules/legal':
-      $output = t('Adds Terms & Conditions statement to registration page. Require users to accept your T&C before they can create an account.');
-      break;
-    case 'admin/legal':
-      $output = t('Adds Terms & Conditions statement to registration page.');
-      break;
+     case 'admin/help#legal':
+      $output .= "<p>Adds Terms & Conditions statement to registration page, requires visitor to accept T&C to register.</p>";
+      $output .= "<p>When a user creates an account you can require them to accept your Terms & Conditions for use of the site.</p>";
+      break;     
   }
   return $output;
 }
 
-/**
- * Implementation of hook_settings().
- */
-function legal_settings() {
-  return form_textarea(t('Terms & Conditions'), 'legal_terms', variable_get('legal_terms', 'edit T&C'), 70, 6, t('Your Terms & Conditions'));
+
+function legal_perm() {
+  return array('administer Terms and Conditions');
 }
 
-function legal_user($type, &$edit, &$user, $category) {
 
-    switch ($type) {
-      case register:
-      	$terms = variable_get('legal_terms', 'edit T&C');
-      	if ($terms == 'edit T&C') {
-          return array();
-        }
-        // Add items to the registration form.
-        $output = form_textarea('', 'conditions', $terms, 70, 10, '', array('readonly' => '', 'wrap' => 'virtual'));
-        $output .= form_checkbox('<strong>Accept</strong> Terms & Conditions of Use', 'legal_accept', 1, $edit['legal_accept']);
-        return array(array('title' => t('Terms and Conditions of Use'), 'data' => $output, 'weight' => 0));
-      case form:
-      	$terms = variable_get('legal_terms', 'edit T&C');
-      	if ($terms == 'edit T&C') {
-          return array();
-        }
-        // Add items to the account edit form.
-        $output = form_textarea('', 'conditions', $terms, 70, 10, '', array('readonly' => '', 'wrap' => 'virtual'));
-        $output .= form_checkbox('<strong>Accept</strong> Terms & Conditions of Use', 'legal_accept', 1, $edit['legal_accept'], '', array('disabled' => 'disabled'));
-        $output .= form_hidden ("legal_accept" , 1);
-        return array(array('title' => t('Terms and Conditions of Use'), 'data' => $output, 'weight' => 0));
-      case validate:
-        // The user has filled out the form and checked the "accept" box.
-        if ($edit['legal_accept'] != '1' && $category == 'account') {
-          form_set_error('legal_accept', t('You must <strong>accept</strong> the Terms & Conditions of Use to register.'));
-        }
+
+function legal_menu($may_cache) {
+
+  $items = array();
+  
+  if ($may_cache) {      
+   
+     $items[] = array('path' => 'admin/settings/legal', 'title' => t('legal'), 'callback' => 'legal_page_admin', 'access' => user_access('administer Terms and Conditions'));
+  }
+  
+  return $items;
+}
+
+
+function legal_page_admin() {
+
+  $edit = $_POST['edit'];
+  $operation = $_POST['op'];
+  
+  if ($operation == 'Save') {
+    legal_validate_conditions($edit);
+    $error = form_get_errors();
+    if (!$error) {
+        legal_save_conditions($edit);
+        drupal_set_message (t('Terms & Conditions have been updated.'));
     }
   }
+  
+  $conditions = legal_get_conditions();
+  
+  $output = form_textarea(t('Terms & Conditions'), 'conditions', $conditions->conditions, 70, 6, t('Your Terms & Conditions'), '', TRUE);
+  $output .= form_radios(t('Display Style'), 'display', $conditions->display, array(t('Scroll Box'), t('Scroll Box (CSS)'), t('HTML Text')), t('How terms & conditions should be displayed to users.'), TRUE);
+  $output .= form_submit(t('Save'));
+  
+  print theme('page', form($output));
+  return;
+}
+
+
+function legal_user($type, &$edit, &$user, $category) {
+  
+    $account = $user;
+    global $user;
+    $conditions = legal_get_conditions();
+    
+    if (is_object($conditions) == FALSE) {
+      return array();
+    } 
+    
+    switch ($type) {
+      case 'register':
+      
+        $form = legal_account_form($conditions->conditions, $conditions->display, $edit['legal_accept']);
+        return $form;
+        
+      case 'form':
+        
+        $legal_account= legal_get_accept($account->uid);
+
+        // User is not account owner - disable checkbox
+        if ($account->uid != $user->uid) {
+            $read_only = array('disabled' => 'disabled');
+        }
+        
+        // T&C has already been accepted - disable checkbox
+        if ($legal_account->uid) {
+            $read_only = array('disabled' => 'disabled');
+            $accepted = 1;
+        }
+        
+        $form = legal_account_form($conditions->conditions, $conditions->display, $accepted, $read_only);
+        return $form;
+        
+      case 'validate':
+        
+        // $user->uid == 0 Unregistered user
+        // Is user account owner?
+        if ($account->uid == $user->uid || $user->uid == 0) {
+            if ($edit['legal_accept'] != '1' && $category == 'account') {
+              form_set_error('legal_accept', t('You must <strong>accept</strong> the Terms & Conditions of Use.'));
+            }
+        }
+        break;
+       
+    case 'update':
+    case 'insert':
+        
+        if ($account->uid == $user->uid || $user->uid == 0) {
+            legal_save_accept($account->uid, $conditions->tc_id);
+        }
+        break;
+    }
+    
+    return;
+  }
+  
+function legal_get_accept($uid) {
+
+    $accept = db_fetch_object(db_query("SELECT * FROM {legal_accepted} WHERE uid = '%d' ORDER BY legal_id DESC LIMIT 1", $uid));
+    return $accept;
+}
+
+
+function legal_save_accept($uid, $tc_id) {
+
+  db_query("INSERT INTO {legal_accepted} (legal_id, uid, tc_id, accepted) VALUES (NULL, '%d', '%d', '%d')", $uid, $tc_id, time());
+
+  return;
+}
+
+function legal_save_conditions($conditions) {
+
+    $conditions->display = variable_set('legal_display', $conditions['display']);
+    
+    // If new conditions are different from current permisions - enter in database
+    $current_conditions = db_result(db_query("SELECT conditions FROM {legal_conditions} ORDER BY tc_id DESC LIMIT 1"));
+    if ($current_conditions != $conditions['conditions']) {
+        db_query("INSERT INTO {legal_conditions} (tc_id, conditions, date) VALUES (NULL, '%s', '%d')", $conditions['conditions'], time());
+    }
+    
+  return;
+}
+
+function legal_get_conditions() {
+
+    $conditions = db_fetch_object(db_query("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC LIMIT 1"));
+    $conditions->display = variable_get('legal_display', '0');
+    return $conditions;
+}
+
+function legal_validate_conditions($edit) {
+
+  if (!$edit['conditions']) form_set_error('conditions', t('Terms & Conditions must be entered.'));
+  return;
+}
+
+function legal_account_form($conditions, $display_style, $accept, $read_only = '') {
+    
+    switch ($display_style) {
+        case 1:
+            drupal_set_html_head('<style type="text/css" media="all">@import "modules/legal/legal.css";</style>');
+            $output = "<div class='legal-terms'>$conditions</div>\n";
+            break;
+        case 2:
+            $output = $conditions;
+            break;
+        default:
+            $output = form_textarea('', 'conditions', $conditions, 70, 10, '', array('readonly' => '', 'wrap' => 'virtual'));
+    }
+    
+    $output .= form_checkbox(t('<strong>Accept</strong> Terms & Conditions of Use'), 'legal_accept', 1, $accept, '', $read_only, TRUE);
+    
+    return array(array('title' => t('Terms and Conditions of Use'), 'data' => $output, 'weight' => 0));
+}
 
 ?>
