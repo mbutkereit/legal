@@ -1,5 +1,5 @@
-README for Legal Module
-=================
+README.txt for Legal Module
+===========================
 
 A module which displays your Terms & Conditions to users who want to register, and makes sure they accept the T&C before their registration is accepted.
 
