@@ -3,40 +3,37 @@ README for Legal Module
 
 A module which displays your Terms & Conditions to users who want to register, and makes sure they accept the T&C before their registration is accepted.
 
+Note:
+If this module is installed, but no T&C text has been entered, this module has no effect.
+
 
 Requirements
 ============
 
-This module requires Drupal 4.2.
+This module requires Drupal 4.3.
 
 
 
 Installation
 ============
 
-1. Create a plain text file with your Terms and Conditions
-
-2. Do a Search and Replace, replacing all instances of quote marks " with forward slash quote mark  \"
-
-3. Open the file legal.module
-
-4. Copy and paste the text of your Terms & Conditions over the text ADD YOUR TERMS AND CONDITIONS HERE, make sure to place the text within the quote marks that surround ADD YOUR TERMS AND CONDITIONS HERE
-
-5. Save and close legal.module
-
 1. Copy the legal.module to the Drupal modules/ directory.
 
-4. Log in to your Drupal site as the Admin user, and go to your administration section
+2. Log in to your Drupal site as the Admin user, and go to your administration section
 
-5. Go to site configuration -> modules
+3. Go to site configuration -> modules
 
-6. Tick the check-box for legal, then click the 'Save Configuration' button at the bottom.
+4. Tick the check-box for legal, then click the 'Save Configuration' button at the bottom.
 
 
 Configuration
 ============
 
-At the moment the only configuration available is to hack the file as described in  Step 4 above
+1. Go to configuration -> modules -> legal
+
+2. Copy and paste your Terms & Conditions into the field "Terms & Conditions"
+
+3. Click "Save configuration"
 
 
 Bugs
@@ -48,14 +45,6 @@ None so far...
 
 To Do
 ============
-
-- Add the T&C field to the Admin->Site Configuration page so that users can input their T&C text
-
-  If the T&C field contains text then T&C field and Accept checkbox are displayed on Registration page
-  
-  If the T&C field is empty then T&C field and Accept checkbox are not displayed on Registration page
-
-  Note: On the Registration page T&C field has to be read only and the Accept checkbox must be checked
 
 - Provide a standard T&C (are there any opensource T&Cs for forums and such like?)
 
