@@ -1,20 +1,50 @@
 <?php
 // $Id$
 
-function legal_system($field) {
-  $system["description"] = t("Adds Terms & Conditions statement to profile.");
-  $system["admin_help"] = t("When a user creates an account you can require them to accept your Terms & Conditions for use of the site<br />Notes:<ul><li>In order for a user to enter information you <b>must</b> check \"enable\".</li><li>In order for other people too see the entered information you must make it \"public\".</li><li>If an item is \"public\", but not enabled, the user can never give it a value and it will never be seen.  Public does <b>not</b> imply \"enable\".</li><li>If an item is enabled, but not shown in the registration form the user will have to ". l("edit their account", "user/edit") ." to place information in the field.</ul>");
-  return $system[$field];
+function legal_help($section = "admin/help#legal") {
+  $output = "";
+
+  switch ($section) {
+    case 'admin/help#legal':
+      $output .= "<p>Adds Terms & Conditions statement to registration page, requires visitor to accept T&C to register.</p>";
+      $output .= "<p>When a user creates an account you can require them to accept your Terms & Conditions for use of the site.</p>";
+      break;
+    case 'admin/system/modules#description':
+      $output = t("Adds Terms & Conditions statement to registration page.");
+      break;
+    case 'admin/system/modules/legal':
+      $output = t("Adds Terms & Conditions statement to registration page. Require users to accept your T&C before they can create an account.");
+      break;
+    case 'admin/legal':
+      $output = t("Adds Terms & Conditions statement to registration page.");
+      break;
+  }
+  return $output;
+}
+
+
+function legal_settings() {
+
+  $output .= form_textarea(t("Terms & Conditions"), "legal_terms", variable_get("legal_terms", "edit T&C"), 70, 6, t("Your Terms & Conditions"));
+
+  $result = db_query("SELECT fid, filter FROM {moderation_filters} ");
+  while ($filter = db_fetch_object($result)) {
+    $thresholds[$filter->fid] = ($filter->filter);
+  }
+
+  return $output;
 }
 
 function legal_user($type, $edit, &$user) {
     // What type of registration action are we taking?
     switch ($type) {
       case t("register_form"):
+      	$terms = variable_get("legal_terms", "edit T&C");
+      	if($terms == 'edit T&C') return $output;
         // Add three items to the resigtration form.
         $output .= form_item("Terms & Conditions of Use",
                              "<textarea name=\"conditions\" rows=\"10\" cols=\"70\" readonly wrap=\"virtual\">".
-                             "ADD YOUR TERMS AND CONDITIONS HERE" . "</textarea>");
+                             $terms . "</textarea>");
         $output .= form_checkbox("<strong>Accept</strong> Terms & Conditions of Use",
                                  legal_accept, 1, $edit["legal_accept"]);
         return $output;
