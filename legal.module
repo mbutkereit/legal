@@ -30,7 +30,7 @@ function legal_settings() {
 }
 
 function legal_user($type, &$edit, &$user, $category) {
-    // What type of registration action are we taking?
+
     switch ($type) {
       case register:
       	$terms = variable_get('legal_terms', 'edit T&C');
@@ -41,9 +41,19 @@ function legal_user($type, &$edit, &$user, $category) {
         $output = form_textarea('', 'conditions', $terms, 70, 10, '', array('readonly' => '', 'wrap' => 'virtual'));
         $output .= form_checkbox('<strong>Accept</strong> Terms & Conditions of Use', 'legal_accept', 1, $edit['legal_accept']);
         return array(array('title' => t('Terms and Conditions of Use'), 'data' => $output, 'weight' => 0));
+      case form:
+      	$terms = variable_get('legal_terms', 'edit T&C');
+      	if ($terms == 'edit T&C') {
+          return array();
+        }
+        // Add items to the account edit form.
+        $output = form_textarea('', 'conditions', $terms, 70, 10, '', array('readonly' => '', 'wrap' => 'virtual'));
+        $output .= form_checkbox('<strong>Accept</strong> Terms & Conditions of Use', 'legal_accept', 1, $edit['legal_accept'], '', array('disabled' => 'disabled'));
+        $output .= form_hidden ("legal_accept" , 1);
+        return array(array('title' => t('Terms and Conditions of Use'), 'data' => $output, 'weight' => 0));
       case validate:
         // The user has filled out the form and checked the "accept" box.
-        if ($edit['legal_accept'] != '1' && !$category) {
+        if ($edit['legal_accept'] != '1' && $category == 'account') {
           form_set_error('legal_accept', t('You must <strong>accept</strong> the Terms & Conditions of Use to register.'));
         }
     }
