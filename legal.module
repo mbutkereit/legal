@@ -1,64 +1,53 @@
 <?php
 // $Id$
 
-function legal_help($section = "admin/help#legal") {
-  $output = "";
+function legal_help($section = 'admin/help#legal') {
+  $output = '';
 
   switch ($section) {
     case 'admin/help#legal':
       $output .= "<p>Adds Terms & Conditions statement to registration page, requires visitor to accept T&C to register.</p>";
       $output .= "<p>When a user creates an account you can require them to accept your Terms & Conditions for use of the site.</p>";
       break;
-    case 'admin/system/modules#description':
-      $output = t("Adds Terms & Conditions statement to registration page.");
+    case 'admin/modules#description':
+      $output = t('Adds Terms & Conditions statement to registration page.');
       break;
     case 'admin/system/modules/legal':
-      $output = t("Adds Terms & Conditions statement to registration page. Require users to accept your T&C before they can create an account.");
+      $output = t('Adds Terms & Conditions statement to registration page. Require users to accept your T&C before they can create an account.');
       break;
     case 'admin/legal':
-      $output = t("Adds Terms & Conditions statement to registration page.");
+      $output = t('Adds Terms & Conditions statement to registration page.');
       break;
   }
   return $output;
 }
 
-
+/**
+ * Implementation of hook_settings().
+ */
 function legal_settings() {
-
-  $output .= form_textarea(t("Terms & Conditions"), "legal_terms", variable_get("legal_terms", "edit T&C"), 70, 6, t("Your Terms & Conditions"));
-
-  $result = db_query("SELECT fid, filter FROM {moderation_filters} ");
-  while ($filter = db_fetch_object($result)) {
-    $thresholds[$filter->fid] = ($filter->filter);
-  }
-
-  return $output;
+  return form_textarea(t('Terms & Conditions'), 'legal_terms', variable_get('legal_terms', 'edit T&C'), 70, 6, t('Your Terms & Conditions'));
 }
 
-function legal_user($type, $edit, &$user) {
+function legal_user($type, &$edit, &$user, $category) {
     // What type of registration action are we taking?
     switch ($type) {
-      case t("register_form"):
-      	$terms = variable_get("legal_terms", "edit T&C");
-      	if($terms == 'edit T&C') return $output;
-        // Add three items to the resigtration form.
-        $output .= form_item("Terms & Conditions of Use",
-                             "<textarea name=\"conditions\" rows=\"10\" cols=\"70\" readonly wrap=\"virtual\">".
-                             $terms . "</textarea>");
-        $output .= form_checkbox("<strong>Accept</strong> Terms & Conditions of Use",
-                                 legal_accept, 1, $edit["legal_accept"]);
-        return $output;
-      case t("register_validate"):
-        // The user has filled out the form and checked the "accept" box.
-        if ($edit["legal_accept"] == "1") {
-          // on success return the values you want to store
-          return array("legal_accept" => 1);
+      case t('register'):
+      	$terms = variable_get('legal_terms', 'edit T&C');
+      	if ($terms == 'edit T&C') {
+          return array();
         }
-        else {
-          // on error return an error message
-          return "You must <strong>accept</strong> the Terms & Conditions of Use to register.";
+        // Add items to the registration form.
+        $output = form_textarea('', 'conditions', $terms, 70, 10, '', array('readonly' => '', 'wrap' => 'virtual'));
+        $output .= form_checkbox('<strong>Accept</strong> Terms & Conditions of Use', 'legal_accept', 1, $edit['legal_accept']);
+        $output .= form_hidden('legal_register', '1');
+        return array(array('title' => t('Terms and Conditions of Use'), 'data' => $output, 'weight' => 0));
+      case t('validate'):
+        // The user has filled out the form and checked the "accept" box.
+        if ($edit['legal_accept'] != '1' && $edit['legal_register'] != '1') {
+          form_set_error('legal_accept', t('You must <strong>accept</strong> the Terms & Conditions of Use to register.'));
         }
     }
   }
-  
-  ?>
+
+?>
