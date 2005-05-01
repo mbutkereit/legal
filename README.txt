@@ -4,7 +4,8 @@ README.txt for Legal Module
 A module which displays your Terms & Conditions to users who want to register, and makes sure they accept the T&C before their registration is accepted.
 
 Note:
-If this module is installed, but no T&C text has been entered, this module has no effect.
+No T&C will be displayed until the T&C text has been input by the administrator.
+
 
 ** WARNING **
 =========
@@ -13,7 +14,7 @@ If you're upgrading from a previous version copy your terms and conditions to yo
 Requirements
 ============
 
-This module requires Drupal 4.5.x
+This module requires Drupal 4.6.x
 
 
 
@@ -68,7 +69,6 @@ To Do
 
 - Prevent existing users logging in until they have accepted new terms & conditions (if admin has updated terms & conditions)
 
-- Provide a standard T&C (are there any opensource T&Cs for forums and such like?)
 
 
 Author
