@@ -83,7 +83,7 @@ function legal_page_admin() {
 }
 
 
-function legal_user($type, &$edit, &$user, $category) {
+function legal_user($type, &$edit, &$user, $category = FALSE) {
   
     $account = $user;
     global $user;
@@ -192,7 +192,8 @@ function legal_account_form($conditions, $display_style, $accept, $read_only = '
     
     switch ($display_style) {
         case 1:
-            drupal_set_html_head('<style type="text/css" media="all">@import "modules/legal/legal.css";</style>');
+            $path = drupal_get_path('module', 'legal');
+            drupal_set_html_head('<style type="text/css" media="all">@import "' . $path . '/legal/legal.css";</style>');
             $output = '<div class="legal-terms">' . $conditions . '</div>';
             break;
         case 2:
