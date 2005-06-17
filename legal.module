@@ -85,6 +85,7 @@ function legal_page_admin() {
 
 function legal_user($type, &$edit, &$user, $category = FALSE) {
   
+    $edit['conditions'] = NULL;
     $account = $user;
     global $user;
     $conditions = legal_get_conditions();
@@ -135,6 +136,8 @@ function legal_user($type, &$edit, &$user, $category = FALSE) {
        
     case 'update':
     case 'insert':
+        
+        $edit['legal_accept'] = NULL;
         // if already accepted skip data entry
         $legal_account= legal_get_accept($account->uid);
         if ($legal_account->uid) break;
