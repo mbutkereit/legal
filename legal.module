@@ -13,16 +13,27 @@ function legal_help($section = 'admin/help#legal') {
       $output = t('Adds Terms & Conditions statement to registration page.');
       break;
      case 'admin/help#legal':
-      $output .= "<p>Adds Terms & Conditions statement to registration page, requires visitor to accept T&C to register.</p>";
-      $output .= "<p>When a user creates an account you can require them to accept your Terms & Conditions for use of the site.</p>";
-      break;     
+      $output .= t('Adds Terms & Conditions statement to registration page, requires visitor to accept T&C to register.');
+      $output .= t('When a user creates an account you can require them to accept your Terms & Conditions for use of the site.');
+      break;
+     case 'admin/settings/legal':
+      $output .= t('Adds a Terms & Conditions statement to the registration page, and requires visitor to accept the T&C to register. ');
+      $output .= t("Also a %page displaying your T&C will be automatically created, access to this page can be set via the %access administration page.", array('%page' => l('page', 'legal'), '%access' => l('access control', 'admin/access')));
   }
   return $output;
 }
 
-
 function legal_perm() {
-  return array('administer Terms and Conditions');
+  return array('administer Terms and Conditions', 'view Terms and Conditions');
+}
+
+function legal_access($op, $node) {
+  
+  global $user;
+  
+  if ($op == 'view') {
+       if (user_access('view Terms and Conditions')) return TRUE;
+  }
 }
 
 
@@ -33,10 +44,29 @@ function legal_menu($may_cache) {
   
   if ($may_cache) {      
    
-     $items[] = array('path' => 'admin/settings/legal', 'title' => t('legal'), 'callback' => 'legal_page_admin', 'access' => user_access('administer Terms and Conditions'));
+     $items[] = array('path' => 'admin/settings/legal', 
+        'title' => t('legal'), 
+        'callback' => 'legal_page_admin', 
+        'access' => user_access('administer Terms and Conditions')
+        );
+    $items[] = array('path' => 'legal',
+      'title' => t('Terms and Conditions'),
+      'callback' => 'legal_page',
+      'access' => user_access('view Terms and Conditions'),
+      'type' => MENU_CALLBACK);
   }
   
   return $items;
+}
+
+function legal_page() {
+
+    $conditions = legal_get_conditions();
+    
+    // TO DO
+    // convert all display formats to HTML
+    $output = theme('legal_account_form', $conditions['conditions'], $conditions['display'], $accepted, $read_only, NULL, FALSE);
+    print theme('page', $output);
 }
 
 
@@ -45,7 +75,7 @@ function legal_page_admin() {
   $edit = $_POST['edit'];
   $operation = $_POST['op'];
   
-  if ($operation == 'Save') {
+  if ($operation == t('Save')) {
     legal_validate_conditions($edit);
     $error = form_get_errors();
     if (!$error) {
@@ -58,12 +88,12 @@ function legal_page_admin() {
   $conditions_in_db = legal_get_conditions();
   $conditions = $conditions_in_db;
   
-  if ($operation == 'Preview') {
+  if ($operation == t('Preview')) {
     $conditions = $edit;
     legal_validate_conditions($edit);
     $output = '<h3>'. t('Preview') .'</h3>';
     $output .= '<fieldset><legend>Terms and Conditions of Use</legend>';
-    $output .= legal_account_form($edit['conditions'], $edit['display'], 0, '', '-preview');
+    $output .= theme('legal_account_form', $edit['conditions'], $edit['display'], 0, '', '-preview');
     $output .= '</fieldset>';
   }
   
@@ -97,7 +127,7 @@ function legal_user($type, &$edit, &$user, $category = FALSE) {
     switch ($type) {
       case 'register':
       
-        $form = legal_account_form($conditions['conditions'], $conditions['display'], $edit['legal_accept']);
+        $form = theme('legal_account_form', $conditions['conditions'], $conditions['display'], $edit['legal_accept']);
         return array(array('title' => t('Terms and Conditions of Use'), 'data' => $form, 'weight' => 0));
         
       case 'form':
@@ -116,7 +146,7 @@ function legal_user($type, &$edit, &$user, $category = FALSE) {
                 $accepted = 1;
             }
             
-            $form = legal_account_form($conditions['conditions'], $conditions['display'], $accepted, $read_only);
+            $form = theme('legal_account_form', $conditions['conditions'], $conditions['display'], $accepted, $read_only);
             return array(array('title' => t('Terms and Conditions of Use'), 'data' => $form, 'weight' => 0));
         }
         
@@ -193,12 +223,12 @@ function legal_validate_conditions($edit) {
   return;
 }
 
-function legal_account_form($conditions, $display_style, $accept, $read_only = '', $preview = '') {
+function theme_legal_account_form($conditions, $display_style, $accept, $read_only = '', $preview = '', $include_checkbox = TRUE) {
     
     switch ($display_style) {
         case 1:
             $path = drupal_get_path('module', 'legal');
-            drupal_set_html_head('<style type="text/css" media="all">@import "' . $path . '/legal/legal.css";</style>');
+            drupal_set_html_head('<style type="text/css" media="all">@import "' . $path . '/legal.css";</style>');
             $output = '<div class="legal-terms">' . $conditions . '</div>';
             break;
         case 2:
@@ -208,7 +238,7 @@ function legal_account_form($conditions, $display_style, $accept, $read_only = '
             $output = form_textarea('', 'conditions' . $preview, $conditions, 70, 10, '', array('readonly' => '', 'wrap' => 'virtual'));
     }
     
-    $output .= form_checkbox(t('<strong>Accept</strong> Terms & Conditions of Use'), 'legal_accept', 1, $accept, '', $read_only, TRUE);
+    if ($include_checkbox) $output .= form_checkbox(t('<strong>Accept</strong> Terms & Conditions of Use'), 'legal_accept', 1, $accept, '', $read_only, TRUE);
     
     return $output;
 }
