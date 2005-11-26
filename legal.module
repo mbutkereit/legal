@@ -84,7 +84,7 @@ function legal_page_admin() {
 
 
 function legal_user($type, &$edit, &$user, $category = FALSE) {
-  
+
     $edit['conditions'] = NULL;
     $account = $user;
     global $user;
@@ -102,21 +102,23 @@ function legal_user($type, &$edit, &$user, $category = FALSE) {
         
       case 'form':
         
-        $legal_account= legal_get_accept($account->uid);
-
-        // User is not account owner - disable checkbox
-        if ($account->uid != $user->uid) {
-            $read_only = array('disabled' => 'disabled');
+        if ($category == 'account') {
+            $legal_account= legal_get_accept($account->uid);
+    
+            // User is not account owner - disable checkbox
+            if ($account->uid != $user->uid) {
+                $read_only = array('disabled' => 'disabled');
+            }
+            
+            // T&C has already been accepted - disable checkbox
+            if ($legal_account->uid) {
+                $read_only = array('disabled' => 'disabled');
+                $accepted = 1;
+            }
+            
+            $form = legal_account_form($conditions['conditions'], $conditions['display'], $accepted, $read_only);
+            return array(array('title' => t('Terms and Conditions of Use'), 'data' => $form, 'weight' => 0));
         }
-        
-        // T&C has already been accepted - disable checkbox
-        if ($legal_account->uid) {
-            $read_only = array('disabled' => 'disabled');
-            $accepted = 1;
-        }
-        
-        $form = legal_account_form($conditions['conditions'], $conditions['display'], $accepted, $read_only);
-        return array(array('title' => t('Terms and Conditions of Use'), 'data' => $form, 'weight' => 0));
         
       case 'validate':
         // User account owner?
