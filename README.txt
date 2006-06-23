@@ -1,79 +1,65 @@
-README.txt for Legal Module
-===========================
+********************************************************************
+D R U P A L    M O D U L E
+********************************************************************
+Name: Legal module Author: Robert Castelo <services at
+cortextcommunications dot com> Drupal: 4.7.x
+********************************************************************
+DESCRIPTION:
 
-A module which displays your Terms & Conditions to users who want to register, and makes sure they accept the T&C before their registration is accepted.
+	A module which displays your Terms & Conditions to users who want to
+    register, and makes sure they accept the T&C before their registration
+    is accepted.
 
-Note:
-No T&C will be displayed until the T&C text has been input by the administrator.
-
-
-** WARNING **
-=========
-If you're upgrading from a previous version copy your terms and conditions to your hard drive, i.e. into a document, before upgrading. You will need to paste them back into Drupal.
-
-Requirements
-============
-
-This module requires Drupal 4.6.x
-
-
-
-Installation
-============
-
-1. Create the database tables using the sql in legal.sql
-
-2. In the Drupal modules directory create a directory called "legal", put the files legal.module and legal.css into the directory.
-
-3. Log in to your Drupal site as the Admin user, and go to the administer section
-
-4. Go to modules
-
-5. Tick the check-box for legal, then click the 'Save Configuration' button at the bottom.
-
-
-Configuration
-============
-
-1. Go to settings --> legal
-
-2. Input your terms & conditions text, set how you would like it displayed
-
-- Scroll Box -
-Standard form text box (read only)
-Text is entered and displayed as text only
-
-- Scroll Box (CSS) -
-Scrollable text box created in CSS
-Text should be entered with HTML formatting
-
-- HTML Text -
-Terms & conditions displayed as HTML formatted text
-Text should be entered with HTML formatting
-
-Bugs
-============
-
-* Existing users can still log in without needing to accept terms & conditions
-
-* Distributed authentication bypasses terms & conditions.
-
-* If admin updates terms & conditions, users who have accepted old terms & conditions will see the new terms & conditions
+	Note: No T&C will be displayed until the T&C text has been input by
+    the administrator.
+    
+    Each time a new version of the T&C is created all users will be required to 
+    accept the new version.
 
 
 
-To Do
-============
+********************************************************************
+INSTALLATION:
 
-- Prevent existing users and distributed authentication users logging in until they have agreed to terms & conditions
+	Note: It is assumed that you have Drupal up and running.  Be sure to
+    check the Drupal web site if you need assistance.  If you run into
+    problems, you should always read the INSTALL.txt that comes with the
+    Drupal package and read the online documentation.
 
-- Prevent existing users logging in until they have accepted new terms & conditions (if admin has updated terms & conditions)
+	1. Place the entire legal directory into your Drupal
+        modules/directory.
+
+	2. Enable the legal module by navigating to:
+
+	   administer > modules
+
+	Click the 'Save configuration' button at the bottom to commit your
+    changes.
+
+	3. If you'r updating from a 4.6 version of the module, using your
+    browser navigate to your-domain/update.php, and run legal update 1
 
 
+********************************************************************
+CONFIGURATION
 
-Author
-============
+	1. Go to admin -> access control
+	    
+	    Set which roles can "view Terms and Conditions"
+	    Set which roles can "administer Terms and Conditions"
+	
+	2. Go to settings --> legal
 
-Please send all feedback and code improvements to me:
+	   Input your terms & conditions text, set how you would like it
+        displayed
 
-Robert Castelo (MegaGrunt) <robertcastelo@cortextcommunications.com>
+	- Scroll Box - Standard form text box (read only) Text is entered
+       and displayed as text only
+
+	- Scroll Box (CSS) - Scrollable text box created in CSS Text should
+       be entered with HTML formatting
+
+	- HTML Text - Terms & conditions displayed as HTML formatted text
+       Text should be entered with HTML formatting
+
+

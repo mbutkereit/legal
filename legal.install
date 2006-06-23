@@ -1,0 +1,70 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install()
+ *
+ * This will automatically install the database tables for the legal module for both the MySQL and PostgreSQL databases.
+ *
+ * If you are using another database, you will have to install the tables by hand, using the queries below as a reference.
+ *
+ * Note that the curly braces around table names are a drupal-specific feature to allow for automatic database table prefixing,
+ * and will need to be removed.
+ */
+function legal_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      $query1 = db_query("CREATE TABLE IF NOT EXISTS {legal_accepted} (
+                        legal_id int(10) NOT NULL auto_increment,
+                        uid int(10) NOT NULL default '0',
+                        tc_id int(10) NOT NULL default '0',
+                        accepted int(11) NOT NULL default '0',
+                        PRIMARY KEY  (legal_id),
+                        KEY uid (uid)
+                        ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+  
+      $query2 = db_query("CREATE TABLE IF NOT EXISTS {legal_conditions} (
+                        tc_id int(10) NOT NULL auto_increment,
+                        conditions longtext NOT NULL,
+                        date int(11) NOT NULL default '0',
+                        extras text,
+                        changes text,
+                        PRIMARY KEY  (tc_id)
+                        ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+
+      if ($query1 && $query2) {
+        $created = TRUE;
+      }
+      break;      
+    default:
+      break;
+  }
+  
+  if ($created) {
+    drupal_set_message(t('Legal module installed successfully.'));
+  }
+  else {
+    drupal_set_message(t('Table installation for the Legal module was unsuccessful. The tables may need to be installed by hand. See legal.install file for a list of the installation queries.'), 'error');
+  }
+  
+  return;
+}
+
+function legal_update_1() {
+
+    _system_update_utf8(array('legal_accepted', 'legal_conditions'));
+    
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+        $ret[] = update_sql("ALTER TABLE {legal_conditions} ADD extras TEXT");
+        $ret[] = update_sql("ALTER TABLE {legal_conditions} ADD changes TEXT");
+        break;      
+    default:
+        break;
+  }
+  return $ret;
+}
+
+?>
