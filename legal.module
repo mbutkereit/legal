@@ -568,7 +568,7 @@ function legal_login_validate($form_id, $form_values) {
 function legal_login_submit($form_id, $form_values) {
       
     global $user;
-    $user = db_fetch_object( db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $form_values['uid']) );
+    $user = user_load(array('uid' => $form_values['uid']));
 
     legal_save_accept($user->uid, $form_values['tc_id']);
 
