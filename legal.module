@@ -398,7 +398,8 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
             $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
             $form_fields['legal']['legal_accept']['#required'] = FALSE;
             
-      
+            if (is_array($conditions['extras'])) {
+            
                 reset($conditions['extras']);
                 while (list ($key, $label) = each ($conditions['extras'])) {
                     if (!empty($label)) {
@@ -406,6 +407,8 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
                         $form_fields['legal'][$key]['#required'] = FALSE;
                     }
                 }
+                
+            }
            
             
         } else {
