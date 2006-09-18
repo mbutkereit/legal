@@ -380,9 +380,9 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         $user = user_load(array('uid' => 0));
         unset($_REQUEST['destination']);
 
-        $account = db_fetch_object( db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $uid) );
+        $signatory = db_fetch_object( db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $uid) );
         
-        drupal_goto('legal_accept/' . $account->uid . '/' . md5($account->name . $account->password . $account->login)); 
+        drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->password . $signatory->login)); 
         break;
         
       case 'register':
