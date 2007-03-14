@@ -223,7 +223,24 @@ function legal_administration() {
         '#type' => 'textarea',
         '#title' => t('Changes'),
     );
+/* 
+
+TO DO
+ADD REDIRECT OPTION
+    $form['options'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Options'),
+      '#collapsible' => TRUE,
+      '#collapsed' => TRUE,
+    );    
     
+    $form['options']['redirect'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Redirect'),
+        '#default_value' => variable_get('legal_redirect', '0'),
+        '#description' => t('Page to redirect user to after T&C have been accepted.'),
+    );
+  */  
     $form['#after_build'] = array('legal_preview');
 
     $form['preview'] = array(
@@ -300,6 +317,8 @@ function legal_administration_submit($form_id, $form_values) {
         db_query("INSERT INTO {legal_conditions} (tc_id, conditions, date, extras, changes) VALUES (NULL, '%s', %d, '%s', '%s')", $form_values['conditions'], time(), serialize($form_values['extras']), $form_values['changes']);
         drupal_set_message (t('Terms & Conditions have been saved.'));
     }
+    
+    variable_set('legal_redirect', $form_values['redirect']);
     
     cache_clear_all();
     return;
@@ -531,6 +550,7 @@ function legal_loggin($uid, $id_hash = NULL) {
 
     $conditions = legal_get_conditions();
     $form = legal_display_fields($conditions);
+
     $form['uid'] = array(
         '#type' => 'value',
         '#value' => $uid,
@@ -545,6 +565,7 @@ function legal_loggin($uid, $id_hash = NULL) {
     );
     
     $form = legal_display_changes($form, $uid);
+    
     
     $form['save'] = array(
         '#type' => 'submit',
@@ -585,8 +606,10 @@ function legal_login_submit($form_id, $form_values) {
     
     user_module_invoke('login', $edit, $user);
     
-    drupal_goto('user/'. $user->uid);
-    return;
+    $destination = variable_get('legal_redirect', '0');
+    $destination = empty($destination) ? 'user/'. $user->uid : $destination;
+
+    return 'user/'. $user->uid;
 }
 
 function theme_legal_login($form) {
