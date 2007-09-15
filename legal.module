@@ -5,16 +5,13 @@ function legal_help($section = 'admin/help#legal') {
   $output = '';
 
   switch ($section) {
-    case 'admin/modules#description':
-      $output = t('Adds Terms & Conditions statement to the registration page.');
-      break;
      case 'admin/help#legal':
-      $output .= t('Adds Terms & Conditions statement to the registration page, requires visitor to accept Terms & Conditions to register.');
+      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept T&C to register.');
       $output .= t('When a user creates an account they are required to accept your Terms & Conditions to complete their registration.');
       break;
      case 'admin/settings/legal':
-      $output .= t('Adds a Terms & Conditions statement to the registration page, and requires visitor to accept the T&C to register. ');
-      $output .= t("A %page displaying your T&C will be automatically created, access to this page can be set via the %access administration page.", array('%page' => l('page', 'legal'), '%access' => l('access control', 'admin/access')));
+      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register. ');
+      $output .= t("A !page displaying your T&C will be automatically created, access to this page can be set via the !access administration page.", array('!page' => l('page', 'legal'), '!access' => l('access control', 'admin/user/access')));
   }
   return $output;
 }
@@ -25,7 +22,7 @@ function legal_perm() {
 
 function legal_access($op, $node) {
 
-  if ($op == 'view' && ( user_access('view Terms and Conditions') || user_access('administer Terms and Conditions') ) ) return TRUE;
+  if ($op == 'view' && (user_access('view Terms and Conditions') || user_access('administer Terms and Conditions') ) ) return TRUE;
 }
 
 function legal_menu($may_cache) {
@@ -35,23 +32,26 @@ function legal_menu($may_cache) {
   if ($may_cache) {      
    
      $items[] = array('path' => 'admin/settings/legal', 
-        'title' => t('legal'), 
-        'callback' => 'legal_administration', 
-        'access' => user_access('administer Terms and Conditions')
+        'title' => t('Legal'), 
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('legal_administration'),
+        'access' => user_access('administer Terms and Conditions'),
+        'description' => t('Display Terms and Conditions statement on the registration page.')
         );
     $items[] = array('path' => 'legal',
-      'title' => t('Terms and Conditions'),
-      'callback' => 'legal_page',
-      'access' => user_access('view Terms and Conditions'),
-      'type' => MENU_CALLBACK
-      );
+        'title' => t('Terms and Conditions'),
+        'callback' => 'legal_page',
+        'access' => user_access('view Terms and Conditions'),
+        'type' => MENU_CALLBACK
+        );
   } else {
     $items[] = array('path' => 'legal_accept',
-      'title' => t('Terms and Conditions'),
-      'callback' => 'legal_loggin',
-      'access' => TRUE,
-      'type' => MENU_CALLBACK
-      );
+        'title' => t('Terms and Conditions'),
+        'callback' => 'drupal_get_form',
+        'callback arguments' => array('legal_login'),
+        'access' => TRUE,
+        'type' => MENU_CALLBACK
+        );
   }
   
   return $items;
@@ -130,26 +130,30 @@ function legal_display_fields($conditions) {
 }
 
 function legal_page() {
-
+    
     $conditions = legal_get_conditions();
+    $output = drupal_get_form('legal_page_form', $conditions);
+    
+    return $output;
+}
+
+function legal_page_form($conditions) {
+
     $form = legal_display_fields($conditions);
     
-
     $extras_count = count($conditions['extras']);
     if ($extras_count < 5) $extras_count = 5;
     
     for ($counter = 1; $counter <= $extras_count; $counter++) {
         
         // overide extra checkboxes
-        $form['legal']['extras-' . $counter]['#attributes'] =  array('disabled' => 'disabled');
+        $form['legal']['extras-' . $counter]['#disabled'] =  TRUE;
         $form['legal']['extras-' . $counter]['#required'] =  FALSE;
     }
 
     unset($form['legal']['legal_accept']);
     
-    $output = drupal_get_form('legal_page', $form);
-    
-    return $output;
+    return $form;
 }
 
 function legal_administration() {
@@ -177,7 +181,6 @@ function legal_administration() {
       '#description' => t('How terms & conditions should be displayed to users.'),
       '#required' => TRUE,
     );
-
     
     // additional checkboxes
     $form['extras'] = array(
@@ -223,26 +226,9 @@ function legal_administration() {
         '#type' => 'textarea',
         '#title' => t('Changes'),
     );
-/* 
-
-TO DO
-ADD REDIRECT OPTION
-    $form['options'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Options'),
-      '#collapsible' => TRUE,
-      '#collapsed' => TRUE,
-    );    
     
-    $form['options']['redirect'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Redirect'),
-        '#default_value' => variable_get('legal_redirect', '0'),
-        '#description' => t('Page to redirect user to after T&C have been accepted.'),
-    );
-  */  
     $form['#after_build'] = array('legal_preview');
-
+    
     $form['preview'] = array(
       '#type' => 'button',
       '#value' => t('Preview'),
@@ -251,11 +237,11 @@ ADD REDIRECT OPTION
     $form['save'] = array(
       '#type' => 'submit',
       '#value' => t('Save'),
-    );  
+    );
     
-    $output = drupal_get_form('legal_administration', $form);
-    return $output;
+    return $form;
 }
+
 
 function legal_preview($form, $form_values) {
 
@@ -305,7 +291,7 @@ function legal_administration_validate($form_id, $form_values) {
 
 function legal_administration_submit($form_id, $form_values) {
 
-    if ($_POST['op'] == t('Preview')) return;
+    if ($form_values['op'] == t('Preview')) return;
 
     if ( variable_get('legal_display', '0') !=  $form_values['display'] ) {
         variable_set('legal_display', $form_values['display']);
@@ -318,8 +304,6 @@ function legal_administration_submit($form_id, $form_values) {
         drupal_set_message (t('Terms & Conditions have been saved.'));
     }
     
-    variable_set('legal_redirect', $form_values['redirect']);
-    
     cache_clear_all();
     return;
 }
@@ -331,22 +315,22 @@ function theme_legal_administration($form) {
     if (empty($form['current_id']['#value'])) {
         $output = '<p><strong>' .t('Terms & Conditions will not be shown to users, as no T&C have been saved.') . '</strong></p>';
     } else {
-        $output = '<h4>' . t('Current Version') . '</h4><p><strong>' . t('Version ID:') . '</strong> ' . $form['current_id']['#value'] . '<br /><strong>' . t('Last saved:') . '</strong> ' . date("l dS of F Y h:i:s A", $form['current_date']['#value']) . '</p>';
+        $output = '<h4>' . t('Current Version') . '</h4><p><strong>' . t('Version ID:') . '</strong> ' . $form['current_id']['#value'] . '<br /><strong>' . t('Last saved:') . '</strong> ' . date("l jS \of F Y h:i:s A", $form['current_date']['#value']) . '</p>';
     }
     
     // preview
     if (empty($form['legal']['conditions']['#value'])) {
-        form_render($form['legal']);
+        drupal_render($form['legal']);
     } else {
         
         $output .= '<div id="preview">';
         $output .= '<h3>'. t('Preview') .'</h3>';
         $form = theme('legal_display', $form);
-        $output .= form_render($form['legal']);
+        $output .= drupal_render($form['legal']);
         $output .= '</div>';
     }
 
-    $output .= form_render($form);
+    $output .= drupal_render($form);
     
     return $output;
 }
@@ -358,7 +342,7 @@ function theme_legal_display($form) {
     // scroll box (CSS)
     if ($form['display']['#value'] == 1) {
         $path = base_path() . drupal_get_path('module', 'legal');
-        drupal_set_html_head('<style type="text/css" media="all">@import "' . $path . '/legal.css";</style>');
+        drupal_add_css(drupal_get_path('module', 'legal') .'/legal.css');
         $form['legal']['conditions']['#prefix' ] = '<div class="legal-terms">';
         $form['legal']['conditions']['#suffix' ] = '</div>';
     }
@@ -371,7 +355,7 @@ function theme_legal_page($form) {
     if (empty($form['current_id']['#value'])) return;
         
     $form = theme('legal_display', $form);
-    $output .= form_render($form);
+    $output .= drupal_render($form);
     
     return $output;
 }
@@ -417,8 +401,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
             $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
             $form_fields['legal']['legal_accept']['#required'] = FALSE;
             
-            if (is_array($conditions['extras'])) {
-            
+      
                 reset($conditions['extras']);
                 while (list ($key, $label) = each ($conditions['extras'])) {
                     if (!empty($label)) {
@@ -426,8 +409,6 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
                         $form_fields['legal'][$key]['#required'] = FALSE;
                     }
                 }
-                
-            }
            
             
         } else {
@@ -519,11 +500,18 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         $conditions = legal_get_conditions();
         if (empty($conditions['conditions'])) return;
         
-        $edit['legal_accept'] = NULL;      
-        if ($account->uid != $user->uid) break;
+        $edit['legal_accept'] = NULL;
+        $edit['conditions'] = NULL;
+        
+        foreach ($conditions['extras'] as $key => $label) {
+            $edit[$key] = NULL;
+        }
+        
+        if ($account->uid != $user->uid) break;     
         
         // if already accepted skip data entry
         $accepted = legal_version_check($account->uid, $conditions['tc_id']);
+        
         if ($accepted == TRUE) break;
         
         legal_save_accept($account->uid, $conditions['tc_id']);
@@ -535,6 +523,13 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         if (empty($conditions['conditions'])) return;
         
         $edit['legal_accept'] = NULL;
+        
+        $edit['conditions'] = NULL;
+         
+        foreach ($conditions['extras'] as $key => $label) {
+          $edit[$key] = NULL;
+        }
+
         // don't insert if user is already registered (administrator)
         if (!empty($user->uid)) break;
 
@@ -546,11 +541,11 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
   }
   
 // force registered users to accept new T&C  
-function legal_loggin($uid, $id_hash = NULL) {
+function legal_login($uid, $id_hash = NULL) {
 
     $conditions = legal_get_conditions();
     $form = legal_display_fields($conditions);
-
+    
     $form['uid'] = array(
         '#type' => 'value',
         '#value' => $uid,
@@ -566,15 +561,15 @@ function legal_loggin($uid, $id_hash = NULL) {
     
     $form = legal_display_changes($form, $uid);
     
-    
     $form['save'] = array(
         '#type' => 'submit',
         '#value' => t('Save'),
-    );  
-
-    $output = drupal_get_form('legal_login', $form);
-    return $output;
+    );
+    
+    return $form;
+    
 }
+  
 
 function legal_login_validate($form_id, $form_values) {
 
@@ -596,19 +591,16 @@ function legal_login_submit($form_id, $form_values) {
 
     legal_save_accept($user->uid, $form_values['tc_id']);
 
-    watchdog('user', t('Session opened for %name.', array('%name' => theme('placeholder', $user->name))));
+    watchdog('user', t('Session opened for %name.', array('%name' => $user->name)));
     
     // Update the user table timestamp noting user has logged in.
     db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
     
     // user has new permissions, so we clear their menu cache
-    cache_clear_all('menu:'. $user->uid, TRUE);
+    cache_clear_all($user->uid, 'cache_menu', TRUE);
     
     user_module_invoke('login', $edit, $user);
     
-    $destination = variable_get('legal_redirect', '0');
-    $destination = empty($destination) ? 'user/'. $user->uid : $destination;
-
     return 'user/'. $user->uid;
 }
 
@@ -627,11 +619,11 @@ function theme_legal_login($form) {
             
         $form['changes']['start_list'] = array('#value' => '<ul>', '#weight' => 0);
         $form['changes']['end_list'] = array('#value' => '</ul>', '#weight' => 3);
-        $output .= form_render($form['changes']);
+        $output .= drupal_render($form['changes']);
     }
 
-    $save = form_render($form['save']);
-    $output .= form_render($form);
+    $save = drupal_render($form['save']);
+    $output .= drupal_render($form);
     $output .= $save;
     
     return $output;
@@ -725,5 +717,3 @@ function legal_version_check($uid, $current_tc_id) {
     // get change log messages
     return $log_messages;
 }
-
-?>
