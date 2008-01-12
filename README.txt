@@ -1,8 +1,9 @@
 ********************************************************************
 D R U P A L    M O D U L E
 ********************************************************************
-Name: Legal module 
+Name: Legal Module 
 Author: Robert Castelo
+Sponsor: Code Positive [www.codepositive.com]
 Drupal: 5.0.x
 ********************************************************************
 DESCRIPTION:
@@ -12,10 +13,14 @@ DESCRIPTION:
     is accepted.
 
 	Note: No T&C will be displayed until the T&C text has been input by
-    the administrator.
+                the administrator.
     
     Each time a new version of the T&C is created all users will be required to 
     accept the new version.
+
+   Note: T&C text should only be entered by administrators or other highly trusted users.
+             filter_xss_admin() is used to filter content for display, this is a very permissive 
+             XSS/HTML filter intended for admin-only use.
 
 
 
@@ -61,6 +66,9 @@ CONFIGURATION
 
 	- HTML Text - Terms & conditions displayed as HTML formatted text
        Text should be entered with HTML formatting
+
+	Note: When displayed on the page /legal your T&Cs will be automatically 
+                reformatted to HTML Text if entered as a Scroll Box or Scroll Box (CSS)
        
        
        
@@ -70,10 +78,11 @@ ACKNOWLEDGEMENTS
 * Drupal 5 update sponsorship
 Lullabot (http://www.lullabot.com)
 
-
 * User data variables clean up
 Steven Wittens (Steven)
 
+* T&C Page formatting
+Bryant Mairs (Susurrus) 
 
 
 

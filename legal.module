@@ -132,28 +132,19 @@ function legal_display_fields($conditions) {
 function legal_page() {
     
     $conditions = legal_get_conditions();
-    $output = drupal_get_form('legal_page_form', $conditions);
+    $output = '';
+    
+    switch(variable_get('legal_display', '0')) {
+      case 0: // Scroll Box
+        $output = nl2br(strip_tags($conditions['conditions']));
+        break;
+      case 1: // CSS Scroll Box with HTML
+      case 2: // HTML
+        $output = filter_xss_admin($conditions['conditions']);
+        break;
+    }
     
     return $output;
-}
-
-function legal_page_form($conditions) {
-
-    $form = legal_display_fields($conditions);
-    
-    $extras_count = count($conditions['extras']);
-    if ($extras_count < 5) $extras_count = 5;
-    
-    for ($counter = 1; $counter <= $extras_count; $counter++) {
-        
-        // overide extra checkboxes
-        $form['legal']['extras-' . $counter]['#disabled'] =  TRUE;
-        $form['legal']['extras-' . $counter]['#required'] =  FALSE;
-    }
-
-    unset($form['legal']['legal_accept']);
-    
-    return $form;
 }
 
 function legal_administration() {
