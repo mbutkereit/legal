@@ -3,45 +3,10 @@
 
 /**
  * Implementation of hook_install()
- *
- * This will automatically install the database tables for the legal module for the MySQL database.
- *
- * If you are using another database, you will have to install the tables by hand, using the queries below as a reference.
- *
- * Note that the curly braces around table names are a drupal-specific feature to allow for automatic database table prefixing,
- * and will need to be removed.
  */
 function legal_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-        $query1 = db_query("CREATE TABLE IF NOT EXISTS {legal_accepted} (
-                        legal_id int(10) NOT NULL auto_increment,
-                        uid int(10) NOT NULL default '0',
-                        tc_id int(10) NOT NULL default '0',
-                        accepted int(11) NOT NULL default '0',
-                        PRIMARY KEY  (legal_id),
-                        KEY uid (uid)
-                        ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
-  
-      $query2 = db_query("CREATE TABLE IF NOT EXISTS {legal_conditions} (
-                        tc_id int(10) NOT NULL auto_increment,
-                        conditions longtext NOT NULL,
-                        date int(11) NOT NULL default '0',
-                        extras text,
-                        changes text,
-                        PRIMARY KEY  (tc_id)
-                        ) /*!40100 DEFAULT CHARACTER SET utf8 */;");
+  $created = drupal_install_schema('legal');
 
-      if ($query1 && $query2) {
-        $created = TRUE;
-      }
-      break;
-
-    default:
-      break;
-  }
-  
   if ($created) {
     drupal_set_message(t('Legal module installed successfully.'));
   }
@@ -52,31 +17,46 @@ function legal_install() {
   return;
 }
 
+/**
+ * Implementation of hook_schema().
+ */
+function legal_schema() {
+  $schema['legal_accepted'] = array(
+    'fields' => array(
+    	'legal_id'  => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
+    	'uid'       => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
+    	'tc_id'     => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
+    	'accepted'  => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+    ),
+    'indexes' => array('uid' => array('uid')),
+    'primary key' => array('legal_id'),
+  );
+
+  $schema['legal_conditions'] = array(
+    'fields' => array(
+    	'tc_id'       => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
+    	'conditions'  => array('type' => 'text', 'size' => 'big', 'not null' => TRUE),
+    	'date'        => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+    	'extras'      => array('type' => 'text'),
+    	'changes'     => array('type' => 'text'),
+    ),
+    'primary key' => array('tc_id'),
+  );
+
+  return $schema;
+}
+
 function legal_update_1() {
 
-    _system_update_utf8(array('legal_accepted', 'legal_conditions'));
-    
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-        $ret[] = update_sql("ALTER TABLE {legal_conditions} ADD extras TEXT");
-        $ret[] = update_sql("ALTER TABLE {legal_conditions} ADD changes TEXT");
-        break;      
-    default:
-        break;
-  }
+	_system_update_utf8(array('legal_accepted', 'legal_conditions'));
+	
+  $ret = array();
+
+  db_add_field($ret, 'legal_conditions', 'extras', array('type' => 'text'));
+  db_add_field($ret, 'legal_conditions', 'changes', array('type' => 'text'));
+
   return $ret;
 }
-
-/**
- * Implementation of hook_uninstall().
- */
-function legal_uninstall() {
-  db_query('DROP TABLE {legal_accepted}');
-  db_query('DROP TABLE {legal_conditions}');
-  variable_del('legal_display');
-}
-
 
 /**
  * Remove conditions and extras from users.data field.
@@ -99,6 +79,7 @@ function legal_update_2() {
 
   // Fetch up to N users and fix their data field.
   $result = db_query_range("SELECT uid, data FROM {users} WHERE uid > %d AND data LIKE '%%s:10:\"conditions\"%%'", $_SESSION['legal_update_2']['uid'], 0, $limit);
+  $user_count = 0;
   while ($user = db_fetch_object($result)) {
     $data = unserialize($user->data);
 
@@ -110,9 +91,11 @@ function legal_update_2() {
     db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", serialize($data), $user->uid);
 
     $_SESSION['legal_update_2']['uid'] = $user->uid;
+    
+    $user_count++;
   }
 
-  if (db_num_rows($result) == $limit) {
+  if ($user_count == $limit) {
     // Return progress (never return 100% here to ensure clean-up is still run last).
     return array('#finished' => $_SESSION['legal_update_2']['uid'] / ($_SESSION['legal_update_2']['max'] + 1));
   }
@@ -121,5 +104,14 @@ function legal_update_2() {
     unset($_SESSION['legal_update_2']);
     return array();
   }
+}
+
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function legal_uninstall() {
+  drupal_uninstall_schema('legal');
+  variable_del('legal_display');
 }
 
