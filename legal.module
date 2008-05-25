@@ -53,11 +53,11 @@ function legal_menu() {
 	   'access arguments' => array('view Terms and Conditions'),
 	   'type' => MENU_CALLBACK
 	   );
-	$items['legal_accept'] = array(
+	$items['legal_accept/%/%'] = array(
 	   'title' => 'Terms and Conditions',
 	   'page callback' => 'drupal_get_form',
-	   'page arguments' => array('legal_login'),
-	   'access arguments' => array(TRUE),
+	   'page arguments' => array('legal_login', 1, 2),
+	   'access callback' => TRUE,
 	   'type' => MENU_CALLBACK
 	   ); 
 
@@ -119,7 +119,7 @@ function legal_display_fields($conditions) {
               '#value' => $conditions['conditions'],
               '#rows' => 10,
               '#weight' => 0,
-              '#attributes' => array('readonly' => ''),
+              '#attributes' => array('readonly' => 'readonly'),
             );
     }
 
@@ -273,7 +273,7 @@ function legal_preview($form, $form_values) {
               '#value' => $form['conditions']['#value'],
               '#parents' => array('legal'),
               '#rows' => 10,
-              '#attributes' => array('readonly' => ''),
+              '#attributes' => array('readonly' => 'readonly'),
             );
     }
 
@@ -385,28 +385,25 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         $form_fields = legal_display_fields($conditions);
         
         // disable checkbox if:
-        // user is already registered (administrator)
-        // if (!empty($user->uid)) {
-        //     $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
-        //     $form_fields['legal']['legal_accept']['#required'] = FALSE;
-        //     
-        //       
-        //         reset($conditions['extras']);
-        //         while (list ($key, $label) = each ($conditions['extras'])) {
-        //             if (!empty($label)) {
-        //                 $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
-        //                 $form_fields['legal'][$key]['#required'] = FALSE;
-        //             }
-        //         }
-        //    
-        //     
-        // } else {
-        //     $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
-        // } 
-
-        // section above seems unnecessary (?) as only anonymous users can access registration page
- 
-        $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
+        // user is already registered (administer users)
+				// users with 'administer users' can access registration on admin/user/user/create
+        if (!empty($user->uid)) {
+            $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
+            $form_fields['legal']['legal_accept']['#required'] = FALSE;
+            
+              
+                reset($conditions['extras']);
+                while (list ($key, $label) = each ($conditions['extras'])) {
+                    if (!empty($label)) {
+                        $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
+                        $form_fields['legal'][$key]['#required'] = FALSE;
+                    }
+                }
+           
+            
+        } else {
+            $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
+        }
         
         $form = theme('legal_display', $form_fields);
         return $form;
@@ -417,7 +414,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         if (empty($conditions['conditions'])) return;
 
         $accepted = legal_version_check($user->uid, $conditions['tc_id']);
-        if ( $accepted == TRUE || $user->uid == 1 ) break;
+        if ($accepted == TRUE || $user->uid == 1) break;
 
         $uid = $user->uid;
 
@@ -429,7 +426,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         $user = user_load(array('uid' => 0));
         unset($_REQUEST['destination']);
 
-        $signatory = db_fetch_object( db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $uid) );
+        $signatory = db_fetch_object(db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $uid));
 
         drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->password . $signatory->login)); 
         break;  
@@ -511,12 +508,6 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
 
         break;
 
-		case 'validate':
-
-			if (arg(0) == 'user' && arg(1) == 'register' && array_key_exists('legal_accept', $edit) && empty($edit['legal_accept'])) {
-      	form_set_error('legal][legal_accept', t('Terms & Conditions must be accepted.'));
-			}
-
     case 'insert':
 
         $conditions = legal_get_conditions();
@@ -564,47 +555,45 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
   }
   
 // require registered users to accept new T&C  
-function legal_login($uid, $id_hash = NULL) {
+function legal_login($constructor, $uid, $id_hash = NULL) {
+	
+	$conditions = legal_get_conditions();
+	$form = legal_display_fields($conditions);
 
-    $conditions = legal_get_conditions();
-    $form = legal_display_fields($conditions);
-    
-    $form['uid'] = array(
-        '#type' => 'value',
-        '#value' => $uid,
-    );
-    $form['id_hash'] = array(
-        '#type' => 'value',
-        '#value' => $id_hash,
-    );
-    $form['tc_id'] = array(
-        '#type' => 'value',
-        '#value' => $conditions['tc_id'],
-    );
-    
-    $form = legal_display_changes($form, $uid);
-    
-    $form['save'] = array(
-        '#type' => 'submit',
-        '#value' => t('Save'),
-    );
-    
-    return $form;
-    
+	$form['uid'] = array(
+	    '#type' => 'value',
+	    '#value' => $uid,
+	);
+	$form['id_hash'] = array(
+	    '#type' => 'value',
+	    '#value' => $id_hash,
+	);
+	$form['tc_id'] = array(
+	    '#type' => 'value',
+	    '#value' => $conditions['tc_id'],
+	);
+
+	$form = legal_display_changes($form, $uid);
+
+	$form['save'] = array(
+	    '#type' => 'submit',
+	    '#value' => t('Save'),
+	);
+
+	return $form; 
 }
   
 
 function legal_login_validate($form, &$form_state) {
+	$account = db_fetch_object( db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $form_state['values']['uid']) );
+	$id_hash = md5($account->name . $account->password . $account->login);
 
-   $account = db_fetch_object( db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $form_state['values']['uid']) );
-   $id_hash = md5($account->name . $account->password . $account->login);
+	if ($id_hash != $form_state['values']['id_hash']) {
+	  form_set_error('legal_accept', t('User ID cannot be identified.'));
+	  drupal_goto();   
+	}
 
-    if ($id_hash != $form_state['values']['id_hash']) {
-        form_set_error('legal_accept', t('User ID cannot be identified.'));
-        drupal_goto();
-    }
-    
-   return;
+	return; 
 }
 
 function legal_login_submit($form, &$form_state) {
@@ -613,7 +602,7 @@ function legal_login_submit($form, &$form_state) {
     $user = user_load(array('uid' => $form_state['values']['uid']));
 
     legal_save_accept($user->uid, $form_state['values']['tc_id']);
-    watchdog('user', 'Session opened for %name.', array('%name' => $user->name));
+    watchdog('legal', '%name accepted T&C version %tc_id.', array('%name' => $user->name, '%tc_id' => $form_state['values']['tc_id']));
     
     // Update the user table timestamp noting user has logged in.
     db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);

@@ -32,6 +32,8 @@ INSTALLATION:
     problems, you should always read the INSTALL.txt that comes with the
     Drupal package and read the online documentation.
 
+      Dependencies: checkbox_validate Module  
+
 	1. Place the entire legal directory into your Drupal
         modules/directory.
 
