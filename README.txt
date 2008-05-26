@@ -4,7 +4,7 @@ D R U P A L    M O D U L E
 Name: Legal Module 
 Author: Robert Castelo
 Sponsor: Code Positive [www.codepositive.com]
-Drupal: 5.0.x
+Drupal: 6.0.x
 ********************************************************************
 DESCRIPTION:
 
