@@ -1,7 +1,7 @@
 ; $Id$
 name = Legal
 description = Display Terms and Conditions statement on the registration page.
-dependencies = checkbox_validate
+dependencies[] = checkbox_validate
 core = 6.x
 
 

@@ -1,4 +1,3 @@
-﻿# $Id$
 #
 # Swedish translation of Drupal (legal)
 # Copyright 2008 Magnus Gunnarsson <seals@passagen.se>
@@ -10,8 +9,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: Legal 6.x\n"
-"POT-Creation-Date: 2008-05-12 18:36+0200\n"
-"PO-Revision-Date: 2008-05-12 18:53+0100\n"
+"POT-Creation-Date: 2008-05-28 01:43+0200\n"
+"PO-Revision-Date: 2008-05-28 01:47+0100\n"
 "Last-Translator: Magnus Gunnarsson <seals@passagen.se>\n"
 "Language-Team: drupalsverige.\n"
 "MIME-Version: 1.0\n"
@@ -102,7 +101,7 @@ msgstr "Ändringar"
 msgid "Preview"
 msgstr "Förhandsvisa"
 
-#: legal.module:252;589
+#: legal.module:252;580
 msgid "Save"
 msgstr "Spara"
 
@@ -134,33 +133,29 @@ msgstr "ID för version:"
 msgid "Last saved:"
 msgstr "Senast sparad:"
 
-#: legal.module:517
-msgid "Terms & Conditions must be accepted."
-msgstr "Villkor måste accepteras."
-
-#: legal.module:603
+#: legal.module:592
 msgid "User ID cannot be identified."
 msgstr "ID för användaren kan inte identifieras."
 
-#: legal.module:633
+#: legal.module:622
 msgid "To continue to use this site please read the Terms & Conditions below, and complete the form to confirm your acceptance."
 msgstr "För att fortsätta använda denna webbplats måste du läsa igenom de allmänna villkoren nedan och fylla i formuläret för att bekräfta att du accepterar dem."
 
-#: legal.module:702
+#: legal.module:691
 msgid "Changes List"
 msgstr "Lista över ändringar"
 
-#: legal.module:703
+#: legal.module:692
 msgid "Changes to the Terms & Conditions since last accepted:"
 msgstr "Förändringar som har gjorts till de allmänna villkoren sedan de senast godkändes:"
 
-#: legal.module:616
-msgid "user"
-msgstr "användare"
+#: legal.module:605;0
+msgid "legal"
+msgstr "legal"
 
-#: legal.module:616
-msgid "Session opened for %name."
-msgstr "Session startad för %name."
+#: legal.module:605
+msgid "%name accepted T&C version %tc_id."
+msgstr "%name accepterade T&C version %tc_id."
 
 #: legal.module:26
 msgid "administer Terms and Conditions"
@@ -184,10 +179,6 @@ msgstr "Visa en villkorstext på registreringssidan."
 msgid "Terms and Conditions"
 msgstr "Allmänna villkor"
 
-#: legal.module:0
-msgid "legal"
-msgstr "legal"
-
 #: legal.install:11
 msgid "Legal module installed successfully."
 msgstr "Installationen av modulen Legal lyckades."
@@ -195,4 +186,11 @@ msgstr "Installationen av modulen Legal lyckades."
 #: legal.install:14
 msgid "Table installation for the Legal module was unsuccessful. The tables may need to be installed by hand. See legal.install file for a list of the installation queries."
 msgstr "Installation av tabeller för modulen Legal misslyckades. Tabellerna kan behöva installeras för hand. Läs mer i filen legal.install för en lista över installationens databasfrågor."
+
+#~ msgid "Terms & Conditions must be accepted."
+#~ msgstr "Villkor måste accepteras."
+#~ msgid "user"
+#~ msgstr "användare"
+#~ msgid "Session opened for %name."
+#~ msgstr "Session startad för %name."
 
