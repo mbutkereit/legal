@@ -70,10 +70,12 @@ function legal_update_2() {
     $conditions = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));
     if (empty($conditions['conditions'])) return;
 
+		$extras = empty($conditions['extras']) ? NULL : array_keys(unserialize($conditions['extras']));
+
     $_SESSION['legal_update_2'] = array(
       'uid' => 0,
       'max' => db_result(db_query('SELECT MAX(uid) FROM {users}')),
-      'extras' => array_keys(unserialize($conditions['extras'])),
+      'extras' => $extras,
     );
   }
 
@@ -83,10 +85,13 @@ function legal_update_2() {
   while ($user = db_fetch_object($result)) {
     $data = unserialize($user->data);
 
-    unset($data['conditions']);
-    foreach ($_SESSION['legal_update_2']['extras'] as $extra) {
-      unset($data[$extra]);
-    }
+    unset($data['conditions']); 
+
+		if (!empty($_SESSION['legal_update_2']['extras'])) {
+	    foreach ($_SESSION['legal_update_2']['extras'] as $extra) {
+	      unset($data[$extra]);
+	    }
+		}
 
     db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", serialize($data), $user->uid);
 
