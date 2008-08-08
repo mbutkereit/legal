@@ -672,7 +672,7 @@ function legal_save_accept($uid, $tc_id) {
 function legal_get_conditions() {
 
     $conditions = db_fetch_array(db_query("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC LIMIT 1"));
-    $conditions['extras'] = unserialize($conditions['extras']);
+    $conditions['extras'] = empty($conditions['extras']) ? array() : unserialize($conditions['extras']);
     return $conditions;
 }
 
