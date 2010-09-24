@@ -6,13 +6,12 @@
  */
 function legal_help($path, $arg) {
   $output = '';
-
   switch ($path) {
-     case 'admin/help#legal':
+    case 'admin/help#legal':
       $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept T&C to register.');
       $output .= t('When a user creates an account they are required to accept your Terms & Conditions to complete their registration.');
       break;
-     case 'admin/settings/legal':
+    case 'admin/settings/legal':
       $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register. ');
       $output .= t("A !page displaying your T&C will be automatically created, access to this page can be set via the !access administration page.", array('!page' => l('page', 'legal'), '!access' => l('permissions', 'admin/user/permissions')));
   }
@@ -30,39 +29,37 @@ function legal_perm() {
  * Implementation of hook_access().
  */
 function legal_access($op, $node, $account) {
-  if ($op == 'view' && (user_access('view Terms and Conditions') || user_access('administer Terms and Conditions') ) ) return TRUE;
+  return ($op == 'view' && (user_access('view Terms and Conditions') || user_access('administer Terms and Conditions')));
 }
 
 /**
  * Implementation of hook_menu().
  */
 function legal_menu() {
-
   $items = array();
+  $items['admin/settings/legal'] = array(
+    'title' => 'Legal',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('legal_administration'),
+    'access arguments' => array('administer Terms and Conditions'),
+    'description' => 'Display Terms and Conditions statement on the registration page.',
+    'file' => 'legal.admin.inc',
+  );
+  $items['legal'] = array(
+    'title' => 'Terms and Conditions',
+    'page callback' => 'legal_page',
+    'access arguments' => array('view Terms and Conditions'),
+    'type' => MENU_CALLBACK,
+    'file' => 'legal.pages.inc',
+  );
+  $items['legal_accept/%/%'] = array(
+    'title' => 'Terms and Conditions',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('legal_login', 1, 2),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
 
-	$items['admin/settings/legal'] = array( 
-	   'title' => 'Legal', 
-	   'page callback' => 'drupal_get_form',
-	   'page arguments' => array('legal_administration'),
-	   'access arguments' => array('administer Terms and Conditions'),
-	   'description' => 'Display Terms and Conditions statement on the registration page.',
-	   'file' => 'legal.admin.inc',
-	   );
-	$items['legal'] = array(
-	   'title' => 'Terms and Conditions',
-	   'page callback' => 'legal_page',
-	   'access arguments' => array('view Terms and Conditions'),
-	   'type' => MENU_CALLBACK,
-	   'file' => 'legal.pages.inc',
-	   );
-	$items['legal_accept/%/%'] = array(
-	   'title' => 'Terms and Conditions',
-	   'page callback' => 'drupal_get_form',
-	   'page arguments' => array('legal_login', 1, 2),
-	   'access callback' => TRUE,
-	   'type' => MENU_CALLBACK,
-	   );
-  
   return $items;
 }
 
@@ -79,107 +76,101 @@ function legal_theme() {
 }
 
 function legal_display_fields($conditions) {
-    
-    $form = array();
-		$accept_label = t('<strong>Accept</strong> Terms & Conditions of Use');
-    
-    $form['current_id'] = array(
-      '#type' => 'value',
-      '#value' => $conditions['tc_id'],
-    );
-    
-    $form['current_date'] = array(
-      '#type' => 'value',
-      '#value' => $conditions['date'],
-    );
-    
-    $form['display'] = array(
-      '#type' => 'value',
-      '#value' => variable_get('legal_display', '0'),
-    );
-    
-    $form['legal'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Terms and Conditions of Use'),
-      '#weight' => 29,
-    );
+  $form = array();
 
-    switch (variable_get('legal_display', '0')) {
-    
-        case 1: // scroll box (CSS)
-        case 2: // HTML
-            $form['legal']['conditions'] = array(
-              '#value' => filter_xss_admin($conditions['conditions']),
-            );
-            break;
-        case 3: // Page Link
-            $form['legal']['conditions'] = array(
-              '#value' => ' ',
-            );
-						$accept_label = t('<strong>Accept</strong> !terms of Use', array('!terms' => l('Terms & Conditions', 'legal')));
-            break;  
+  $accept_label = t('<strong>Accept</strong> Terms & Conditions of Use');
 
-        default: // scroll box (HTML)
-            $form['legal']['conditions'] = array(
-              '#type' => 'textarea',
-              '#title' => t('Terms & Conditions'),
-              '#default_value' => $conditions['conditions'],
-              '#value' => $conditions['conditions'],
-              '#rows' => 10,
-              '#weight' => 0,
-              '#attributes' => array('readonly' => 'readonly'),
-            );
+  $form['current_id'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['tc_id'],
+  );
+
+  $form['current_date'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['date'],
+  );
+
+  $form['display'] = array(
+    '#type' => 'value',
+    '#value' => variable_get('legal_display', '0'),
+  );
+
+  $form['legal'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Terms and Conditions of Use'),
+    '#weight' => 29,
+  );
+
+  switch (variable_get('legal_display', '0')) {
+    case 1: // scroll box (CSS)
+    case 2: // HTML
+      $form['legal']['conditions'] = array(
+        '#value' => filter_xss_admin($conditions['conditions']),
+      );
+      break;
+
+    case 3: // Page Link
+      $form['legal']['conditions'] = array(
+        '#value' => ' ',
+      );
+      $accept_label = t('<strong>Accept</strong> !terms of Use', array('!terms' => l('Terms & Conditions', 'legal')));
+      break;
+
+    default: // scroll box (HTML)
+      $form['legal']['conditions'] = array(
+        '#type' => 'textarea',
+        '#title' => t('Terms & Conditions'),
+        '#default_value' => $conditions['conditions'],
+        '#value' => $conditions['conditions'],
+        '#rows' => 10,
+        '#weight' => 0,
+        '#attributes' => array('readonly' => 'readonly'),
+      );
+  }
+
+  if (!empty($conditions['extras'])) {
+    foreach ($conditions['extras'] as $key => $label) {
+      if (!empty($label)) {
+        $form['legal'][$key] = array(
+          '#type' => 'checkbox',
+          '#title' => filter_xss_admin($label),
+          '#default_value' => 0,
+          '#weight' => 2,
+          '#required' => TRUE,
+        );
+      }
     }
+  }
 
-    if (!empty($conditions['extras'])) {
-        while (list ($key, $label) = each ($conditions['extras'])) {
+  $form['legal']['legal_accept'] = array(
+    '#type' => 'checkbox',
+    '#title' => $accept_label,
+    '#default_value' => 0,
+    '#weight' => 50,
+    '#required' => TRUE,
+  );
 
-            if (!empty($label)) {
-                $form['legal'][$key] = array(
-                    '#type' => 'checkbox',
-                    '#title' => filter_xss_admin($label),
-                    '#default_value' => 0,
-                    '#weight' => 2,
-                    '#required' => TRUE,
-                );
-            }
-        }
-    }
-    
-    $form['legal']['legal_accept'] = array(
-        '#type' => 'checkbox',
-      	'#title' => $accept_label,
-        '#default_value' => 0,
-        '#weight' => 50,
-        '#required' => TRUE,
-    );
-    
-    return $form;
+  return $form;
 }
 
 function theme_legal_display($form) {
-
-    if (empty($form['legal']['conditions']['#value'])) return;
-        
-    // scroll box (CSS)
+  if (!empty($form['legal']['conditions']['#value'])) {
+    // Scroll box (CSS).
     if ($form['display']['#value'] == 1) {
-        $path = base_path() . drupal_get_path('module', 'legal');
-        drupal_add_css(drupal_get_path('module', 'legal') .'/legal.css');
-        $form['legal']['conditions']['#prefix' ] = '<div class="legal-terms">';
-        $form['legal']['conditions']['#suffix' ] = '</div>';
+      $path = base_path() . drupal_get_path('module', 'legal');
+      drupal_add_css(drupal_get_path('module', 'legal') .'/legal.css');
+      $form['legal']['conditions']['#prefix' ] = '<div class="legal-terms">';
+      $form['legal']['conditions']['#suffix' ] = '</div>';
     }
-
     return $form;
+  }
 }
 
 function theme_legal_page($form) {
-
-    if (empty($form['current_id']['#value'])) return;
-        
+  if (!empty($form['current_id']['#value'])) {
     $form = theme('legal_display', $form);
-    $output .= drupal_render($form);
-    
-    return $output;
+    return drupal_render($form);
+  }
 }
 
 function legal_user($op, &$edit, &$account, $category = FALSE) {
