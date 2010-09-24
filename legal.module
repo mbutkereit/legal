@@ -228,7 +228,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         $user = user_load(array('uid' => 0));
         unset($_REQUEST['destination']);
 
-        $signatory = db_fetch_object(db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $uid));
+        $signatory = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $uid, 0, 1));
 
         drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->password . $signatory->login)); 
         break;  
@@ -387,7 +387,7 @@ function legal_login($constructor, $uid, $id_hash = NULL) {
   
 
 function legal_login_validate($form, &$form_state) {
-	$account = db_fetch_object( db_query('SELECT * FROM {users} WHERE uid = %d LIMIT 1', $form_state['values']['uid']) );
+  $account = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $form_state['values']['uid'], 0, 1));
 	$id_hash = md5($account->name . $account->password . $account->login);
 
 	if ($id_hash != $form_state['values']['id_hash']) {
@@ -443,9 +443,8 @@ function theme_legal_login($form) {
 }
   
 function legal_get_accept($uid) {
-
-    $accept = db_fetch_object(db_query("SELECT * FROM {legal_accepted} WHERE uid = '%d' ORDER BY legal_id DESC LIMIT 1", $uid));
-    return $accept;
+  $accept = db_fetch_object(db_query_range("SELECT * FROM {legal_accepted} WHERE uid = '%d' ORDER BY legal_id DESC", $uid, 0, 1));
+  return $accept;
 }
 
 
@@ -457,10 +456,9 @@ function legal_save_accept($uid, $tc_id) {
 }
 
 function legal_get_conditions() {
-
-    $conditions = db_fetch_array(db_query("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC LIMIT 1"));
-    $conditions['extras'] = empty($conditions['extras']) ? array() : unserialize($conditions['extras']);
-    return $conditions;
+  $conditions = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));
+  $conditions['extras'] = empty($conditions['extras']) ? array() : unserialize($conditions['extras']);
+  return $conditions;
 }
 
 function legal_conditions_updated($new) {
