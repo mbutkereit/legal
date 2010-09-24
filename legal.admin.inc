@@ -109,7 +109,7 @@ function legal_preview($form, $form_values) {
             $form['legal']['conditions'] = array(
               '#value' => ' ',
             );
-            $form['legal']['legal_accept']['#title'] = t('<strong>Accept</strong> !terms of Use', array('!terms' => l('Terms & Conditions', 'legal')));
+            $form['legal']['legal_accept']['#title'] = t('<strong>Accept</strong> !terms of Use', array('!terms' => l(t('Terms & Conditions'), 'legal')));
             break;  
         default: // scroll box (HTML)
             $form['legal']['conditions'] = array(

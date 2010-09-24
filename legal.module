@@ -113,7 +113,7 @@ function legal_display_fields($conditions) {
       $form['legal']['conditions'] = array(
         '#value' => ' ',
       );
-      $accept_label = t('<strong>Accept</strong> !terms of Use', array('!terms' => l('Terms & Conditions', 'legal')));
+      $accept_label = t('<strong>Accept</strong> !terms of Use', array('!terms' => l(t('Terms & Conditions'), 'legal')));
       break;
 
     default: // scroll box (HTML)
