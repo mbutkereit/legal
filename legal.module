@@ -52,16 +52,16 @@ function legal_menu() {
 	   'title' => 'Terms and Conditions',
 	   'page callback' => 'legal_page',
 	   'access arguments' => array('view Terms and Conditions'),
-	   'type' => MENU_CALLBACK
+	   'type' => MENU_CALLBACK,
+	   'file' => 'legal.pages.inc',
 	   );
 	$items['legal_accept/%/%'] = array(
 	   'title' => 'Terms and Conditions',
 	   'page callback' => 'drupal_get_form',
 	   'page arguments' => array('legal_login', 1, 2),
 	   'access callback' => TRUE,
-	   'type' => MENU_CALLBACK
-	   ); 
-
+	   'type' => MENU_CALLBACK,
+	   );
   
   return $items;
 }
@@ -156,27 +156,6 @@ function legal_display_fields($conditions) {
     
     return $form;
 }
-
-function legal_page() {
-    
-    $conditions = legal_get_conditions();
-    $output = '';
-    
-    switch(variable_get('legal_display', '0')) {
-      case 0: // Scroll Box
-        $output = nl2br(strip_tags($conditions['conditions']));
-        break;
-      case 1: // CSS Scroll Box with HTML
-      case 2: // HTML
-      case 3: // Page Link 
-        $output = filter_xss_admin($conditions['conditions']);
-        break;
-    }
-    
-    return $output;
-}
-
-
 
 function theme_legal_display($form) {
 
