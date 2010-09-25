@@ -5,16 +5,7 @@
  * Implementation of hook_install()
  */
 function legal_install() {
-  $created = drupal_install_schema('legal');
-
-  if ($created) {
-    drupal_set_message(t('Legal module installed successfully.'));
-  }
-  else {
-    drupal_set_message(t('Table installation for the Legal module was unsuccessful. The tables may need to be installed by hand. See legal.install file for a list of the installation queries.'), 'error');
-  }
-  
-  return;
+  drupal_install_schema('legal');
 }
 
 /**
