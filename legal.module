@@ -12,8 +12,8 @@ function legal_help($path, $arg) {
       $output .= t('When a user creates an account they are required to accept your Terms & Conditions to complete their registration.');
       break;
     case 'admin/settings/legal':
-      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register. ');
-      $output .= t("A !page displaying your T&C will be automatically created, access to this page can be set via the !access administration page.", array('!page' => l('page', 'legal'), '!access' => l('permissions', 'admin/user/permissions')));
+      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register.');
+      $output .= t('A <a href="@page">page</a> displaying your T&C will be automatically created, access to this page can be set via the <a href="@access">permissions</a> administration page.', array('@page' => url('legal'), '@access' => url('admin/user/permissions')));
   }
   return $output;
 }
@@ -113,7 +113,7 @@ function legal_display_fields($conditions) {
       $form['legal']['conditions'] = array(
         '#value' => ' ',
       );
-      $accept_label = t('<strong>Accept</strong> !terms of Use', array('!terms' => l(t('Terms & Conditions'), 'legal')));
+      $accept_label = t('<strong>Accept</strong> <a href="@terms">Terms & Conditions</a> of Use', array('@terms' => url('legal')));
       break;
 
     default: // scroll box (HTML)
