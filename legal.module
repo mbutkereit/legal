@@ -173,192 +173,195 @@ function theme_legal_page($form) {
   }
 }
 
+/**
+ * Implementation of hook_user().
+ */
 function legal_user($op, &$edit, &$account, $category = FALSE) {
+  global $user;
 
-    global $user;
-    
-    switch ($op) {
-        
-      case 'register':
-        
-        $conditions = legal_get_conditions();
-        if (empty($conditions['conditions'])) return;
-        
-        $form_fields = legal_display_fields($conditions);
-        
-        // disable checkbox if:
-        // user is already registered (administer users)
-				// users with 'administer users' can access registration on admin/user/user/create
-        if (!empty($user->uid)) {
-            $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
-            $form_fields['legal']['legal_accept']['#required'] = FALSE;
-            
-              
-                reset($conditions['extras']);
-                while (list ($key, $label) = each ($conditions['extras'])) {
-                    if (!empty($label)) {
-                        $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
-                        $form_fields['legal'][$key]['#required'] = FALSE;
-                    }
-                }
-           
-            
-        } else {
-            $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
+  switch ($op) {
+    case 'register':
+      $conditions = legal_get_conditions();
+      if (empty($conditions['conditions'])) {
+        return;
+      }
+
+      $form_fields = legal_display_fields($conditions);
+
+      // Disable checkbox if:
+      //  - user is already registered (administer users);
+			//  - users with 'administer users' can access registration on admin/user/user/create.
+      if (!empty($user->uid)) {
+        $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
+        $form_fields['legal']['legal_accept']['#required'] = FALSE;
+        foreach ($conditions['extras'] as $key => $label) {
+          if (!empty($label)) {
+            $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
+            $form_fields['legal'][$key]['#required'] = FALSE;
+          }
         }
-        
+      }
+      else {
+        $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
+      }
+
+      $form = theme('legal_display', $form_fields);
+      return $form;
+
+    case 'login':
+      $conditions = legal_get_conditions();
+      if (empty($conditions['conditions'])) {
+        return;
+      }
+
+      $accepted = legal_version_check($user->uid, $conditions['tc_id']);
+      if ($accepted == TRUE || $user->uid == 1) {
+        break;
+      }
+
+      $uid = $user->uid;
+
+      // Destroy the current session.
+      session_destroy();
+      module_invoke_all('user', 'logout', NULL, $user);
+
+      // We have to use $GLOBALS to unset a global variable.
+      $user = user_load(array('uid' => 0));
+      unset($_REQUEST['destination']);
+
+      $signatory = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $uid, 0, 1));
+
+      drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->password . $signatory->login));
+      break;
+
+    case 'form':
+      $conditions = legal_get_conditions();
+      if (empty($conditions['conditions'])) {
+        return;
+      }
+
+      if ($category == 'account') {
+        $form_fields = legal_display_fields($conditions);
+
+        // Check latest version of T&C has been accepted.
+        $accepted = legal_version_check($account->uid, $conditions['tc_id']);
+
+        if ($accepted == TRUE) {
+          $form_fields['legal']['legal_accept']['#value'] = 1;
+          if (!empty($conditions['extras'])) {
+            foreach ($conditions['extras'] as $key => $label) {
+              if (!empty($label)) {
+                $form_fields['legal'][$key]['#value'] = 1;
+              }
+            }
+          }
+        }
+
+        // Disable checkbox if:
+        //  - user is not account owner;
+        //  - latest T&C has already been accepted.
+        if ($account->uid != $user->uid || $accepted  == TRUE) {
+          $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
+          if (!empty($conditions['extras'])) {
+            reset($conditions['extras']);
+            foreach ($conditions['extras'] as $key => $label) {
+              if (!empty($label)) {
+                $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
+              }
+            }
+          }
+        }
+
+        // Not required if user is not account owner.
+        if ($account->uid != $user->uid) {
+          $form_fields['legal']['legal_accept']['#required'] = FALSE;
+          if (!empty($conditions['extras'])) {
+            reset($conditions['extras']);
+            foreach ($conditions['extras'] as $key => $label) {
+              if (!empty($label)) {
+                $form_fields['legal'][$key]['#required'] = FALSE;
+              }
+            }
+          }
+        }
+
+        // Enable account owner to accept.
+        if ($account->uid == $user->uid && $accepted != TRUE) {
+          $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
+          $form_fields['legal']['legal_accept']['#required'] = TRUE;
+
+          if (!empty($conditions['extras'])) {
+            reset($conditions['extras']);
+            foreach ($conditions['extras'] as $key => $label) {
+              if (!empty($label)) {
+                $form_fields['legal'][$key]['#default_value'] = $edit[$key];
+                $form_fields['legal'][$key]['#required'] = TRUE;
+              }
+            }
+          }
+        }
+
         $form = theme('legal_display', $form_fields);
         return $form;
+      }
 
-      case 'login':
-
-        $conditions = legal_get_conditions();
-        if (empty($conditions['conditions'])) return;
-
-        $accepted = legal_version_check($user->uid, $conditions['tc_id']);
-        if ($accepted == TRUE || $user->uid == 1) break;
-
-        $uid = $user->uid;
-
-        // Destroy the current session:
-        session_destroy();
-        module_invoke_all('user', 'logout', NULL, $user);
-
-        // We have to use $GLOBALS to unset a global variable:
-        $user = user_load(array('uid' => 0));
-        unset($_REQUEST['destination']);
-
-        $signatory = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $uid, 0, 1));
-
-        drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->password . $signatory->login)); 
-        break;  
-        
-      case 'form':
-        
-        $conditions = legal_get_conditions();
-        if (empty($conditions['conditions'])) return;
-        
-        if ($category == 'account') {
-    
-            $form_fields = legal_display_fields($conditions);
-            
-            // check latest version of T&C has been accepted
-            $accepted = legal_version_check($account->uid, $conditions['tc_id']);
-            
-            if ($accepted == TRUE) {
-                $form_fields['legal']['legal_accept']['#value'] = 1;
-                
-                if (!empty($conditions['extras'])) {
-                    while (list ($key, $label) = each ($conditions['extras'])) {
-                        if (!empty($label)) {
-                            $form_fields['legal'][$key]['#value'] = 1;
-                        }
-                    }
-                }
-            }
-    
-            // disable checkbox if:
-            // user is not account owner
-            // latest T&C has already been accepted
-            if ($account->uid != $user->uid || $accepted  == TRUE) {
-                $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
-                
-                if (!empty($conditions['extras'])) {
-                    reset($conditions['extras']);
-                    while (list ($key, $label) = each ($conditions['extras'])) {
-                        if (!empty($label)) {
-                            $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
-                        }
-                    }
-                }
-            }
-            
-            // not required if user is not account owner
-            if ($account->uid != $user->uid) {
-                $form_fields['legal']['legal_accept']['#required'] = FALSE;
-            
-                if (!empty($conditions['extras'])) {
-                    reset($conditions['extras']);
-                    while (list ($key, $label) = each ($conditions['extras'])) {
-                        if (!empty($label)) {
-                            $form_fields['legal'][$key]['#required'] = FALSE;
-                        }
-                    }
-                }            
-            }
-
-            // enable account owner to accept
-            if ($account->uid == $user->uid && $accepted != TRUE) {
-                $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
-                $form_fields['legal']['legal_accept']['#required'] = TRUE;
-                
-                if (!empty($conditions['extras'])) {
-                    reset($conditions['extras']);
-                    while (list ($key, $label) = each ($conditions['extras'])) {
-                        if (!empty($label)) {
-                            $form_fields['legal'][$key]['#default_value'] = $edit[$key];
-                            $form_fields['legal'][$key]['#required'] = TRUE;
-                        }
-                    }
-                } 
-                
-            }
-            
-            $form = theme('legal_display', $form_fields);
-            return $form;
-        }
-
-        break;
+      break;
 
     case 'insert':
+      $conditions = legal_get_conditions();
+      if (empty($conditions['conditions'])) {
+        return;
+      }
 
-        $conditions = legal_get_conditions();
-        if (empty($conditions['conditions'])) return;
+      $edit['legal_accept'] = NULL;
 
-        $edit['legal_accept'] = NULL;
+      $edit['conditions'] = NULL;
 
-        $edit['conditions'] = NULL;
+      foreach ($conditions['extras'] as $key => $label) {
+        $edit[$key] = NULL;
+      }
 
-        foreach ($conditions['extras'] as $key => $label) {
-          $edit[$key] = NULL;
-        }
-
-        // don't insert if user is already registered (administrator)
-        if (!empty($user->uid)) break;
-
-        legal_save_accept($account->uid, $conditions['tc_id']);
-        break;  
-       
-    case 'update':
-        
-        $conditions = legal_get_conditions();
-        if (empty($conditions['conditions'])) return;
-        
-        $edit['legal_accept'] = NULL;
-        $edit['conditions'] = NULL;
-        
-        foreach ($conditions['extras'] as $key => $label) {
-            $edit[$key] = NULL;
-        }
-        
-        if ($account->uid != $user->uid) break;     
-        
-        // if already accepted skip data entry
-        $accepted = legal_version_check($account->uid, $conditions['tc_id']);
-        
-        if ($accepted == TRUE) break;
-        
-        legal_save_accept($account->uid, $conditions['tc_id']);
+      // Don't insert if user is already registered (administrator).
+      if (!empty($user->uid)) {
         break;
-        
-    }
-    
-    return;
+      }
+
+      legal_save_accept($account->uid, $conditions['tc_id']);
+      break;
+
+    case 'update':
+      $conditions = legal_get_conditions();
+      if (empty($conditions['conditions'])) {
+        return;
+      }
+
+      $edit['legal_accept'] = NULL;
+      $edit['conditions'] = NULL;
+
+      foreach ($conditions['extras'] as $key => $label) {
+        $edit[$key] = NULL;
+      }
+
+      if ($account->uid != $user->uid) {
+        break;
+      }
+
+      // If already accepted skip data entry.
+      $accepted = legal_version_check($account->uid, $conditions['tc_id']);
+
+      if ($accepted == TRUE) {
+        break;
+      }
+
+      legal_save_accept($account->uid, $conditions['tc_id']);
+      break;
   }
-  
-// require registered users to accept new T&C  
+}
+
+/**
+ * Require registered users to accept new T&C.
+ */
 function legal_login($constructor, $uid, $id_hash = NULL) {
-	
 	$conditions = legal_get_conditions();
 	$form = legal_display_fields($conditions);
 
