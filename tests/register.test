@@ -1,63 +1,77 @@
-<?php 
+<?php
+// $Id$
+
 /**
- * 	Register as new user and create account.
+ * Register as new user and create account.
  */
 
-class LegalRegister extends DrupalTestCase {
+class LegalRegisterTestCase extends DrupalWebTestCase {
 
-  function get_info() {
+  function getInfo() {
     return array(
-      'name' => t('Create Account'),
-      'desc' => t('Register as new user and create account.'),
-      'group' => t('Legal'),
+      'name' => 'Create Account',
+      'description' => 'Register as new user and create account.',
+      'group' => 'Legal',
     );
   }
 
   function setUp() {
-    $this->drupalModuleEnable('legal');
-		$this->drupalModuleDisable('profile');
-		$this->drupalModuleDisable('nodeprofile');
-		
-    parent::setUp();
+    // Enable any modules required for the test.
+    parent::setUp('checkbox_validate', 'legal');
+
+    // Create and login user
+    $admin_user = $this->drupalCreateUser(array('administer Terms and Conditions'));
+    $this->drupalLogin($admin_user);
+
+    $name = $this->randomName();
+    $edit = array(
+      'conditions' => $name,
+    );
+
+    $this->drupalPost('admin/settings/legal', $edit, t('Save'));
+
+    // Check account wasn't created.
+    $this->assertText(t('Terms &amp; Conditions have been saved.'), 'T&C text setup correctly');
+
+    // Log user out.
+    $this->drupalLogout();
   }
 
-	/**
-	 *  Accept T&C to successfully create an account 
-	 */
+  /**
+   * Accept T&C to successfully create an account.
+   */
   function testRegisterSuccessful() {
-		
-		/* Prepare a user to do testing */
-		$name = $this->randomName();
-		$mail = "$name@example.com";
-		$edit = array('name' => $name,
-		              'mail' => $mail,
-									'legal_accept' => 1);
-									
-		$this->drupalPost('user/register', $edit, 'Create new account');
+    // Prepare a user to do testing.
+    $name = $this->randomName();
+    $mail = "$name@example.com";
+    $edit = array(
+      'name' => $name,
+      'mail' => $mail,
+      'legal_accept' => TRUE,
+    );
 
- 		/* Check account was created */
-		$this->assertText(t('Your password and further instructions have been sent to your e-mail address'), ' [post] Account created');
+    $this->drupalPost('user/register', $edit, t('Create new account'));
+
+     // Check account was created.
+    $this->assertText(t('Your password and further instructions have been sent to your e-mail address.'), 'Account created');
   }
 
-	/**
-	 *  Don't accept T&C no account created
-	 */
+  /**
+   * Don't accept T&C no account created.
+   */
   function testRegisterUnsuccessful() {
-		
-		/* Prepare a user to do testing */
-		$name = $this->randomName();
-		$mail = "$name@example.com";
-		$edit = array('name' => $name,
-		              'mail' => $mail);
-									
-		$this->drupalPost('user/register', $edit, 'Create new account');
+    // Prepare a user to do testing.
+    $name = $this->randomName();
+    $mail = "$name@example.com";
+    $edit = array(
+      'name' => $name,
+      'mail' => $mail,
+    );
 
- 		/* Check account was created */
-		$this->assertText(t('Terms & Conditions must be accepted.'), ' [post] T&C not accepted, account not created');
-		//  		/* Check Invoice was created */
-		
+    $this->drupalPost('user/register', $edit, t('Create new account'));
+
+     // Check account wasn't created.
+    $this->assertText(t('Accept Terms &amp; Conditions of Use field is required.'), 'T&C not accepted, account not created');
   }
-
 
 }
-?>
