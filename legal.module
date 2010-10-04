@@ -447,7 +447,13 @@ function legal_save_accept($uid, $tc_id) {
 }
 
 function legal_get_conditions() {
-  $conditions = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));
+	$keys = array('tc_id', 'conditions', 'date', 'extras', 'changes');
+	$result = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));
+
+	foreach ($keys as $key) {
+		$conditions[$key] = isset($result[$key]) ? $result[$key] : '';
+	}
+	
   $conditions['extras'] = empty($conditions['extras']) ? array() : unserialize($conditions['extras']);
   return $conditions;
 }

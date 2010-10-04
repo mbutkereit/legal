@@ -45,17 +45,20 @@ function legal_administration() {
   );
 
   $extras_count = ((count($conditions['extras']) < 5) ? 5 : count($conditions['extras']));
+
   for ($counter = 1; $counter <= $extras_count; $counter++) {
+    $extra = isset($conditions['extras']['extras-' . $counter]) ? $conditions['extras']['extras-' . $counter] : '';
+
     $form['extras']['extras-' . $counter] = array(
       '#type' => 'textfield',
       '#title' => t('Label'),
-      '#default_value' => $conditions['extras']['extras-' . $counter],
+      '#default_value' => $extra,
     );
     // Overide extra checkboxes.
     if (!empty($conditions['extras']['extras-' . $counter])) {
       $form['legal']['extras-' . $counter] = array(
         '#type' => 'checkbox',
-        '#title' => filter_xss_admin($conditions['extras']['extras-' . $counter]),
+        '#title' => filter_xss_admin($extra),
         '#default_value' => 0,
         '#weight' => 2,
         '#required' => FALSE,
@@ -77,7 +80,7 @@ function legal_administration() {
     '#title' => t('Changes'),
   );
 
-  $form['#after_build'] = array('legal_preview');
+  $form['#after_build'] = array('legal_preview'); 
 
   $form['preview'] = array(
     '#type' => 'button',
