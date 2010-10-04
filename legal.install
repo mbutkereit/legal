@@ -14,10 +14,10 @@ function legal_install() {
 function legal_schema() {
   $schema['legal_accepted'] = array(
     'fields' => array(
-    	'legal_id'  => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
-    	'uid'       => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
-    	'tc_id'     => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
-    	'accepted'  => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+      'legal_id'  => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
+      'uid'       => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
+      'tc_id'     => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
+      'accepted'  => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
     ),
     'indexes' => array('uid' => array('uid')),
     'primary key' => array('legal_id'),
@@ -25,11 +25,11 @@ function legal_schema() {
 
   $schema['legal_conditions'] = array(
     'fields' => array(
-    	'tc_id'       => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
-    	'conditions'  => array('type' => 'text', 'size' => 'big', 'not null' => TRUE),
-    	'date'        => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
-    	'extras'      => array('type' => 'text'),
-    	'changes'     => array('type' => 'text'),
+      'tc_id'       => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
+      'conditions'  => array('type' => 'text', 'size' => 'big', 'not null' => TRUE),
+      'date'        => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+      'extras'      => array('type' => 'text'),
+      'changes'     => array('type' => 'text'),
     ),
     'primary key' => array('tc_id'),
   );
@@ -39,8 +39,8 @@ function legal_schema() {
 
 function legal_update_1() {
 
-	_system_update_utf8(array('legal_accepted', 'legal_conditions'));
-	
+  _system_update_utf8(array('legal_accepted', 'legal_conditions'));
+
   $ret = array();
 
   db_add_field($ret, 'legal_conditions', 'extras', array('type' => 'text'));
@@ -51,7 +51,7 @@ function legal_update_1() {
 
 /**
  * Remove conditions and extras from users.data field.
-*/ 
+*/
 function legal_update_2() {
   // How many users to process each time.
   $limit = 50;
@@ -61,7 +61,7 @@ function legal_update_2() {
     $conditions = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));
     if (empty($conditions['conditions'])) return;
 
-		$extras = empty($conditions['extras']) ? NULL : array_keys(unserialize($conditions['extras']));
+    $extras = empty($conditions['extras']) ? NULL : array_keys(unserialize($conditions['extras']));
 
     $_SESSION['legal_update_2'] = array(
       'uid' => 0,
@@ -76,18 +76,18 @@ function legal_update_2() {
   while ($user = db_fetch_object($result)) {
     $data = unserialize($user->data);
 
-    unset($data['conditions']); 
+    unset($data['conditions']);
 
-		if (!empty($_SESSION['legal_update_2']['extras'])) {
-	    foreach ($_SESSION['legal_update_2']['extras'] as $extra) {
-	      unset($data[$extra]);
-	    }
-		}
+    if (!empty($_SESSION['legal_update_2']['extras'])) {
+      foreach ($_SESSION['legal_update_2']['extras'] as $extra) {
+        unset($data[$extra]);
+      }
+    }
 
     db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", serialize($data), $user->uid);
 
     $_SESSION['legal_update_2']['uid'] = $user->uid;
-    
+
     $user_count++;
   }
 
@@ -102,7 +102,6 @@ function legal_update_2() {
   }
 }
 
-
 /**
  * Implementation of hook_uninstall().
  */
@@ -110,4 +109,3 @@ function legal_uninstall() {
   drupal_uninstall_schema('legal');
   variable_del('legal_display');
 }
-

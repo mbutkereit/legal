@@ -84,17 +84,14 @@ function legal_display_fields($conditions) {
     '#type' => 'value',
     '#value' => $conditions['tc_id'],
   );
-
   $form['current_date'] = array(
     '#type' => 'value',
     '#value' => $conditions['date'],
   );
-
   $form['display'] = array(
     '#type' => 'value',
     '#value' => variable_get('legal_display', '0'),
   );
-
   $form['legal'] = array(
     '#type' => 'fieldset',
     '#title' => t('Terms and Conditions of Use'),
@@ -182,6 +179,8 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
   switch ($op) {
     case 'register':
       $conditions = legal_get_conditions();
+
+      // Do nothing if there's no Terms and Conditions text set.
       if (empty($conditions['conditions'])) {
         return;
       }
@@ -190,7 +189,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
 
       // Disable checkbox if:
       //  - user is already registered (administer users);
-			//  - users with 'administer users' can access registration on admin/user/user/create.
+      //  - users with 'administer users' can access registration on admin/user/user/create.
       if (!empty($user->uid)) {
         $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
         $form_fields['legal']['legal_accept']['#required'] = FALSE;
@@ -362,89 +361,81 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
  * Require registered users to accept new T&C.
  */
 function legal_login($constructor, $uid, $id_hash = NULL) {
-	$conditions = legal_get_conditions();
-	$form = legal_display_fields($conditions);
+  $conditions = legal_get_conditions();
+  $form = legal_display_fields($conditions);
 
-	$form['uid'] = array(
-	    '#type' => 'value',
-	    '#value' => $uid,
-	);
-	$form['id_hash'] = array(
-	    '#type' => 'value',
-	    '#value' => $id_hash,
-	);
-	$form['tc_id'] = array(
-	    '#type' => 'value',
-	    '#value' => $conditions['tc_id'],
-	);
+  $form['uid'] = array(
+    '#type' => 'value',
+    '#value' => $uid,
+  );
+  $form['id_hash'] = array(
+    '#type' => 'value',
+    '#value' => $id_hash,
+  );
+  $form['tc_id'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['tc_id'],
+  );
 
-	$form = legal_display_changes($form, $uid);
+  $form = legal_display_changes($form, $uid);
 
-	$form['save'] = array(
-	    '#type' => 'submit',
-	    '#value' => t('Confirm'),
-	);
+  $form['save'] = array(
+    '#type' => 'submit',
+    '#value' => t('Confirm'),
+  );
 
-	return $form; 
+  return $form;
 }
-  
 
 function legal_login_validate($form, &$form_state) {
   $account = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $form_state['values']['uid'], 0, 1));
-	$id_hash = md5($account->name . $account->password . $account->login);
+  $id_hash = md5($account->name . $account->password . $account->login);
 
-	if ($id_hash != $form_state['values']['id_hash']) {
-	  form_set_error('legal_accept', t('User ID cannot be identified.'));
-	  drupal_goto();   
-	}
-
-	return; 
+  if ($id_hash != $form_state['values']['id_hash']) {
+    form_set_error('legal_accept', t('User ID cannot be identified.'));
+    drupal_goto();
+  }
 }
 
 function legal_login_submit($form, &$form_state) {
-      
-    global $user;
-    $user = user_load(array('uid' => $form_state['values']['uid']));
+  global $user;
+  $user = user_load(array('uid' => $form_state['values']['uid']));
 
-    legal_save_accept($user->uid, $form_state['values']['tc_id']);
-    watchdog('legal', '%name accepted T&C version %tc_id.', array('%name' => $user->name, '%tc_id' => $form_state['values']['tc_id']));
-    
-    // Update the user table timestamp noting user has logged in.
-    db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
-    
-    // user has new permissions, so we clear their menu cache
-    cache_clear_all($user->uid, 'cache_menu', TRUE);
-    
-    user_module_invoke('login', $edit, $user);
-		$form_state['redirect'] = 'user/'. $user->uid; 
-    return;
+  legal_save_accept($user->uid, $form_state['values']['tc_id']);
+  watchdog('legal', '%name accepted T&C version %tc_id.', array('%name' => $user->name, '%tc_id' => $form_state['values']['tc_id']));
+
+  // Update the user table timestamp noting user has logged in.
+  db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
+
+  // User has new permissions, so we clear their menu cache.
+  cache_clear_all($user->uid, 'cache_menu', TRUE);
+
+  user_module_invoke('login', $edit, $user);
+  $form_state['redirect'] = 'user/'. $user->uid;
 }
 
 function theme_legal_login($form) {
+  $form = theme('legal_display', $form);
 
-    $form = theme('legal_display', $form);
-    
-    $output .= '<p>' . t('To continue to use this site please read the Terms & Conditions below, and complete the form to confirm your acceptance.' ) . '</p>';
-    
-    if ($form['changes']) {
+  $output .= '<p>' . t('To continue to use this site please read the Terms & Conditions below, and complete the form to confirm your acceptance.' ) . '</p>';
 
-        foreach (element_children($form['changes']) as $key) {
-            $form['changes'][$key]['#prefix'] .= '<li>';
-            $form['changes'][$key]['#suffix'] .= '</li>';
-        }
-            
-        $form['changes']['start_list'] = array('#value' => '<ul>', '#weight' => 0);
-        $form['changes']['end_list'] = array('#value' => '</ul>', '#weight' => 3);
-        $output .= drupal_render($form['changes']);
+  if ($form['changes']) {
+    foreach (element_children($form['changes']) as $key) {
+      $form['changes'][$key]['#prefix'] .= '<li>';
+      $form['changes'][$key]['#suffix'] .= '</li>';
     }
+    $form['changes']['start_list'] = array('#value' => '<ul>', '#weight' => 0);
+    $form['changes']['end_list'] = array('#value' => '</ul>', '#weight' => 3);
+    $output .= drupal_render($form['changes']);
+  }
 
-    $save = drupal_render($form['save']);
-    $output .= drupal_render($form);
-    $output .= $save;
-    
-    return $output;
+  $save = drupal_render($form['save']);
+  $output .= drupal_render($form);
+  $output .= $save;
+
+  return $output;
 }
-  
+
 function legal_get_accept($uid) {
   $accept = db_fetch_object(db_query_range("SELECT * FROM {legal_accepted} WHERE uid = '%d' ORDER BY legal_id DESC", $uid, 0, 1));
   return $accept;
@@ -452,10 +443,7 @@ function legal_get_accept($uid) {
 
 
 function legal_save_accept($uid, $tc_id) {
-
   db_query("INSERT INTO {legal_accepted} (legal_id, uid, tc_id, accepted) VALUES (NULL, '%d', '%d', '%d')", $uid, $tc_id, time());
-
-  return;
 }
 
 function legal_get_conditions() {
@@ -465,69 +453,70 @@ function legal_get_conditions() {
 }
 
 function legal_conditions_updated($new) {
+  $old = legal_get_conditions();
+  if ($old['conditions'] != $new['conditions']) {
+    return TRUE;
+  }
 
-    $old = legal_get_conditions();
-    if ($old['conditions'] != $new['conditions']) return TRUE;
-    
-    $count = count($new['extras']);
-        
-    for ($counter = 1; $counter <= $count; $counter++) {
-    
-        if ( $old['extras']['extras-' . $counter] != $new['extras']['extras-' . $counter] ) return TRUE;
+  $count = count($new['extras']);
+
+  for ($counter = 1; $counter <= $count; $counter++) {
+    if ($old['extras']['extras-' . $counter] != $new['extras']['extras-' . $counter]) {
+      return TRUE;
     }
-    
-    return FALSE;    
+  }
+
+  return FALSE;
 }
 
-// get all changes since user last accepted
+/**
+ * Get all changes since user last accepted.
+ */
 function legal_display_changes($form, $uid) {
-    
-    $last_accepted = legal_get_accept($uid);
-    if (empty($last_accepted)) return $form;
-    
-    $results = db_query("SELECT * FROM {legal_conditions} WHERE tc_id > %d ORDER BY tc_id DESC", $last_accepted->tc_id);
-    
-    if (empty($results)) return $form;
-    
-    $form['changes'] = array(
-        '#type' => 'fieldset',
-        '#title' => t('Changes List'),
-        '#description' => t('Changes to the Terms & Conditions since last accepted:'),
-        '#collapsible' => TRUE,
-        '#collapsed' => TRUE,
-        '#tree' => TRUE,
-    );
-    
-    while ($conditions = db_fetch_object($results)) { 
-       
-       unset($changes);
-        
-        if (!empty($conditions->changes)) {
-        
-            $changes = explode("\r\n", $conditions->changes);
-            
-            foreach($changes as $change) {
-                $form['changes'][] = array(
-                    '#value' => filter_xss_admin($change),
-                    '#weight' => 2,
-                );
-                $is_list = TRUE;
-            }
-        }
-        
-    }
-    
-    if (!$is_list) $form['changes'] = NULL;
-
+  $last_accepted = legal_get_accept($uid);
+  if (empty($last_accepted)) {
     return $form;
+  }
+
+  $results = db_query("SELECT * FROM {legal_conditions} WHERE tc_id > %d ORDER BY tc_id DESC", $last_accepted->tc_id);
+  if (empty($results)) {
+    return $form;
+  }
+
+  $form['changes'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Changes List'),
+    '#description' => t('Changes to the Terms & Conditions since last accepted:'),
+    '#collapsible' => TRUE,
+    '#collapsed' => TRUE,
+    '#tree' => TRUE,
+  );
+
+  while ($conditions = db_fetch_object($results)) {
+    unset($changes);
+    if (!empty($conditions->changes)) {
+      $changes = explode("\r\n", $conditions->changes);
+      foreach($changes as $change) {
+        $form['changes'][] = array(
+          '#value' => filter_xss_admin($change),
+          '#weight' => 2,
+        );
+        $is_list = TRUE;
+      }
+    }
+  }
+
+  if (!$is_list) {
+    $form['changes'] = NULL;
+  }
+
+  return $form;
 }
 
-// check if user has accepted latest version of T&C
+/**
+ * Check if user has accepted latest version of T&C.
+ */
 function legal_version_check($uid, $current_tc_id) {
-
-    $legal_account = legal_get_accept($uid);
-    if ($legal_account->tc_id == $current_tc_id) return TRUE;
-    
-    // get change log messages
-    return $log_messages;
+  $legal_account = legal_get_accept($uid);
+  return ($legal_account->tc_id == $current_tc_id);
 }
