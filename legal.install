@@ -12,26 +12,43 @@ function legal_install() {
  * Implementation of hook_schema().
  */
 function legal_schema() {
-  $schema['legal_accepted'] = array(
-    'fields' => array(
-      'legal_id'  => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
-      'uid'       => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
-      'tc_id'     => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
-      'accepted'  => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
-    ),
-    'indexes' => array('uid' => array('uid')),
-    'primary key' => array('legal_id'),
-  );
-
   $schema['legal_conditions'] = array(
     'fields' => array(
-      'tc_id'       => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
+      'tc_id' => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
+      'version' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+      'revision' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+    	'language' => array(
+      	'description' => t("TODO."),
+      	'type' => 'varchar',
+      	'length' => '12',
+      	'not null' => TRUE,
+      	'default' => ''
+    	),
       'conditions'  => array('type' => 'text', 'size' => 'big', 'not null' => TRUE),
       'date'        => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
       'extras'      => array('type' => 'text'),
       'changes'     => array('type' => 'text'),
     ),
     'primary key' => array('tc_id'),
+  );
+
+  $schema['legal_accepted'] = array(
+    'fields' => array(
+      'legal_id'  => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
+      'version' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+      'revision' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+    	'language' => array(
+      	'description' => t("TODO."),
+      	'type' => 'varchar',
+      	'length' => '12',
+      	'not null' => TRUE,
+      	'default' => ''
+    	),
+      'uid'       => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
+      'accepted'  => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
+    ),
+    'indexes' => array('uid' => array('uid')),
+    'primary key' => array('legal_id'),
   );
 
   return $schema;
@@ -100,6 +117,32 @@ function legal_update_2() {
     unset($_SESSION['legal_update_2']);
     return array();
   }
+}
+
+/**
+ * Add version, revision, and language fields.
+*/
+function legal_update_6003() {
+
+  $ret = array();
+
+  db_add_field($ret, 'legal_conditions', 'version', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_add_field($ret, 'legal_conditions', 'revision', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_add_field($ret, 'legal_conditions', 'language', array('type' => 'varchar', 'length' => '12', 'not null' => TRUE, 'default' => ''));
+  db_add_field($ret, 'legal_accepted', 'version', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_add_field($ret, 'legal_accepted', 'revision', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
+  db_add_field($ret, 'legal_accepted', 'language', array('type' => 'varchar', 'length' => '12', 'not null' => TRUE, 'default' => ''));
+
+  $ret[] = update_sql('UPDATE {legal_conditions} SET version = tc_id');
+  $ret[] = update_sql('UPDATE {legal_conditions} SET revision = 1');
+  $ret[] = update_sql("UPDATE {legal_conditions} SET language = 'en'");
+  $ret[] = update_sql('UPDATE {legal_accepted} SET version = tc_id');
+  $ret[] = update_sql('UPDATE {legal_accepted} SET revision = 1');
+  $ret[] = update_sql("UPDATE {legal_accepted} SET language = 'en'");
+
+  db_drop_field($ret, 'legal_accepted', 'tc_id'); 
+
+  return $ret;	
 }
 
 /**

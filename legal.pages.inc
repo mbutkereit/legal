@@ -7,7 +7,8 @@
  */
 
 function legal_page() {
-  $conditions = legal_get_conditions();
+  global $language;
+  $conditions = legal_get_conditions($language->language);
   $output = '';
   
   switch(variable_get('legal_display', '0')) {

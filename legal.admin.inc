@@ -6,11 +6,26 @@
  * Administration functions for the Legal module.
  */
 
- /**
-  * Module settings form.
-  */
+/**
+ * Module settings form.
+ */
 function legal_administration() {
   $conditions = legal_get_conditions();
+
+	if (module_exists('locale')) {
+		$languages = locale_language_list();
+	  $language_default = language_default();
+	  $language = $language_default->language;
+		//$language = empty($conditions['language']) ? $language_default->language : $conditions['language'];
+		$version_options = array('version' => t('All users (new version)'), 'revision' => t('Language specific users (a revision)'));
+		$version_handling = 'version';
+	}
+	else {
+		$languages = array('en' => t('English'));
+		$language = 'en';
+		$version_handling = 'version';
+	}
+ 
   $form = legal_display_fields($conditions);
 
   $form['conditions'] = array(
@@ -33,6 +48,39 @@ function legal_administration() {
     '#description' => t('How terms & conditions should be displayed to users.'),
     '#required' => TRUE,
   );
+  
+	// only display options if there's more than one language available
+	if (count($languages) > 1) {
+	  // Language and version handling options
+	  $form['language'] = array(
+	    '#type' => 'fieldset',
+	    '#title' => t('Language'),
+	    '#collapsible' => TRUE,
+	    '#collapsed' => TRUE,
+	  );
+
+		$form['language']['language'] = array(
+		  '#type' => 'select',
+		  '#title' => t('Language'),
+		  '#options' => $languages,
+		  '#default_value' => $language,
+		);
+
+		$form['language']['version_handling'] = array(
+		  '#type' => 'select',
+		  '#title' => t('Ask To Re-accept'),
+	    '#description' => t('<strong>All users</strong>: all users will be asked to accept the new version of the T&C, including users who accepted a previous version.<br />
+													 <strong>Language specific</strong>: only new users, and users who accepted the T&C in the same language as this new revision will be asked to re-accept.'),
+		  '#options' => $version_options,
+		  '#default_value' => $version_handling,
+		); 
+	}
+	else {
+		$form['language']['language'] = array('#type' => 'value', '#value' => $language);
+		$form['language']['version_handling'] = array('#type' => 'value', '#value' => $version_handling);
+		 
+	}
+
 
   // Additional checkboxes.
   $form['extras'] = array(
@@ -54,6 +102,7 @@ function legal_administration() {
       '#title' => t('Label'),
       '#default_value' => $extra,
     );
+
     // Overide extra checkboxes.
     if (!empty($conditions['extras']['extras-' . $counter])) {
       $form['legal']['extras-' . $counter] = array(
@@ -141,38 +190,52 @@ function legal_administration_validate($form, &$form_state) {
   if (empty($form_state['values']['conditions'])) {
     form_set_error('conditions', t('Terms & Conditions must be entered.'));
   }
+
 }
 
 function legal_administration_submit($form, &$form_state) {
   $values = $form_state['values'];
 
+  // preview request, don't save anything
   if ($form_state['clicked_button']['#value'] == t('Preview')) {
-    // It's just a preview request. Don' save anything.
     return;
   }
 
-  if (variable_get('legal_display', '0') !=  $form_state['values']['display']) {
-    variable_set('legal_display', $form_state['values']['display']);
+  if (variable_get('legal_display', '0') !=  $values['display']) {
+    variable_set('legal_display', $values['display']);
     drupal_set_message(t('Display setting has been saved.'));
   }
 
   // If new conditions are different from current permisions, enter in database.
-  if (legal_conditions_updated($form)) {
-    db_query("INSERT INTO {legal_conditions} (tc_id, conditions, date, extras, changes) VALUES (NULL, '%s', %d, '%s', '%s')", $values['conditions'], time(), serialize($values['extras']), $values['changes']);
+  if (legal_conditions_updated($values)) {
+    $version = legal_version($values['version_handling'], $values['language']);
+    db_query("INSERT INTO {legal_conditions} (tc_id, version, revision, language, conditions, date, extras, changes) VALUES (NULL, %d, %d, '%s', '%s', %d, '%s', '%s')", $version['version'], $version['revision'], $values['language'], $values['conditions'], time(), serialize($values['extras']), $values['changes']);
     drupal_set_message (t('Terms & Conditions have been saved.'));
   }
 
   // Empty all cache.
-  // @todo: is this really necessary?
+  // @todo: is this necessary?
   cache_clear_all();
 }
 
 function theme_legal_administration($form) {
+	$language = '';
+	
   if (empty($form['current_id']['#value'])) {
     $output = '<p><strong>' .t('Terms & Conditions will not be shown to users, as no T&C have been saved.') . '</strong></p>';
   }
   else {
-    $output = '<h4>' . t('Current Version') . '</h4><p><strong>' . t('Version ID:') . '</strong> ' . $form['current_id']['#value'] . '<br /><strong>' . t('Last saved:') . '</strong> ' . date("l jS \of F Y h:i:s A", $form['current_date']['#value']) . '</p>';
+		if (module_exists('locale')) {
+			$languages = locale_language_list();
+	    $language = $form['language_value']['#value'];
+			$language = check_plain($languages[$language]);
+		}
+
+    $output = '<h4>'. t('Current Version') .'</h4>';
+    $output .= '<p><strong>'. t('Version ID:') .'</strong> '. $form['current_id']['#value'] .'<br />';
+    if (!empty($language)) $output .= '<strong>'. t('Language:') .'</strong> '. $language .'<br />';
+    if (!empty($language)) $output .= '<strong>'. t('Revision:') .'</strong> '. $form['revision_id']['#value'] .'<br />';
+    $output .= '<strong>'. t('Last saved:') .'</strong> '. date("l jS \of F Y h:i:s A", $form['current_date']['#value']) .'</p>';
   }
 
   // Preview.
@@ -187,7 +250,117 @@ function theme_legal_administration($form) {
     $output .= '</div>';
   }
 
+	$output .= '<h4>'. t('Create New Version / Translation') .'</h4>'; 
   $output .= drupal_render($form);
 
   return $output;
 }
+
+function legal_conditions_updated($new) {
+  $previous_same_language = legal_get_conditions($new['language']);
+	$previous = legal_get_conditions();
+
+  if (($previous_same_language['conditions'] != $new['conditions']) && ($previous['conditions'] != $new['conditions'])) {
+    return TRUE;
+  }
+
+  $count = count($new['extras']);
+
+  for ($counter = 1; $counter <= $count; $counter++) {
+    if (($previous_same_language['extras']['extras-' . $counter] != $new['extras']['extras-' . $counter]) && ($previous['extras']['extras-' . $counter] != $new['extras']['extras-' . $counter])) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Determine version ID of T&C
+ * if it's new version determine next version id, if it's a revision return the ID of the current version
+ * increment revision ID by 1
+ */
+function legal_version($version_handling, $language) {
+
+  $version = db_result(db_query_range("SELECT version FROM {legal_conditions} ORDER BY version DESC", 0, 1)); 
+	
+	// make new version
+	if ($version_handling == 'version') {
+		$versioning['version'] = empty($version) ? 1 : $version + 1;
+		$versioning['revision'] = 1;
+	}
+	
+	// make new revision
+	if ($version_handling == 'revision') {
+		$revision = db_result(db_query_range("SELECT revision FROM {legal_conditions} WHERE version = %d AND language = '%s' ORDER BY revision DESC", $version, $language, 0, 1));
+		$versioning['version'] = $version; 
+		$versioning['revision'] = empty($revision) ? 1 : $revision + 1;
+	}
+
+	return $versioning;
+}
+
+/**
+ * Languages administration form.
+ */ 
+function legal_languages() {
+
+  $latest_header = array(t('Language'), t('Version'), t('Revision'));
+	$latest_rows = legal_versions_latest_get();
+	$rows = array();
+	
+	foreach ($latest_rows as $language_name => $language) {
+		$row = array();
+		$row[] = check_plain($language_name);
+		$row[] = empty($language['version']) ? '-' : $language['version'];
+		$row[] = empty($language['revision']) ? '-' : $language['revision']; 
+		$rows[] = $row; 
+	}
+
+	$form['latest'] = array(
+	  '#type' => 'fieldset',
+	  '#title' => t('Latest Version'),
+	);
+
+	$form['latest']['#value'] = theme('table', $latest_header, $rows); 
+
+	return $form;
+}
+
+ /**
+  * Get latest version for each language.
+  */
+function legal_versions_latest_get($language = NULL) {
+	$conditions = array();
+	$current_version = db_result(db_query_range('SELECT version FROM {legal_conditions} ORDER BY version DESC', 0, 1));
+
+	// get latest version for each language
+	if (empty($language)) {
+		$languages = locale_language_list(); 
+			
+		foreach ($languages as $language_id => $language_name) {
+			$row = db_fetch_object(db_query_range("SELECT * FROM {legal_conditions} WHERE version = %d AND language = '%s' ORDER BY revision DESC", $current_version, $language_id, 0, 1));
+      $conditions[$language_name] = legal_versions_latest_get_data($row);
+		}
+		
+	} // get latest version for specific language 
+	else {
+		$row = db_fetch_object(db_query_range("SELECT * FROM {legal_conditions} WHERE language = '%s' GROUP BY language ORDER BY version DESC", $language, 0, 1));
+    $conditions[$language] = legal_versions_latest_get_data($row); 
+	}
+	
+	return $conditions;
+}
+
+function legal_versions_latest_get_data($data) {
+  $row['version'] = isset($data->version) ? $data->version : '';
+	$row['revision'] = isset($data->revision) ? $data->revision : '';  
+	$row['language'] = isset($data->language) ? $data->language : '';  
+	$row['conditions'] = isset($data->conditions) ? $data->conditions : '';  
+	$row['date'] = isset($data->date) ? $data->date : '';  
+	$row['extras'] = isset($data->extras) ? $data->extras : '';  
+	$row['changes'] = isset($data->changes) ? $data->changes : '';
+	return $row;
+}
+
+

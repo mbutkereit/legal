@@ -8,12 +8,13 @@ function legal_help($path, $arg) {
   $output = '';
   switch ($path) {
     case 'admin/help#legal':
-      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept T&C to register.');
-      $output .= t('When a user creates an account they are required to accept your Terms & Conditions to complete their registration.');
+      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept T&C to register. 
+										When a user creates an account they are required to accept your Terms & Conditions to complete their registration.');
       break;
     case 'admin/settings/legal':
-      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register.');
-      $output .= t('A <a href="@page">page</a> displaying your T&C will be automatically created, access to this page can be set via the <a href="@access">permissions</a> administration page.', array('@page' => url('legal'), '@access' => url('admin/user/permissions')));
+      $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register. 
+										A <a href="@page">page</a> displaying your T&C will be automatically created, access to this page can be set via the <a href="@access">permissions</a> administration page.', 
+										array('@page' => url('legal'), '@access' => url('admin/user/permissions')));
   }
   return $output;
 }
@@ -37,6 +38,7 @@ function legal_access($op, $node, $account) {
  */
 function legal_menu() {
   $items = array();
+
   $items['admin/settings/legal'] = array(
     'title' => 'Legal',
     'page callback' => 'drupal_get_form',
@@ -45,6 +47,26 @@ function legal_menu() {
     'description' => 'Display Terms and Conditions statement on the registration page.',
     'file' => 'legal.admin.inc',
   );
+
+	$items['admin/settings/legal/terms'] = array(
+	  'title' => 'Current Terms',
+	  'access arguments' => array('administer Terms and Conditions'),
+	  'description' => 'Display Terms and Conditions statement on the registration page.',
+	  'type' => MENU_DEFAULT_LOCAL_TASK, 
+	);
+	
+	$items['admin/settings/legal/languages'] = array(
+	  'title' => 'Languages',
+	  'page callback' => 'drupal_get_form',
+	  'page arguments' => array('legal_languages'),
+		'access callback' => 'legal_languages_access',
+	  'access arguments' => array('administer Terms and Conditions'),
+	  'description' => 'Display Terms and Conditions statement on the registration page.',
+	    'weight' => 10, 
+		'type' => MENU_LOCAL_TASK,
+	  'file' => 'legal.admin.inc',
+	); 
+	
   $items['legal'] = array(
     'title' => 'Terms and Conditions',
     'page callback' => 'legal_page',
@@ -52,6 +74,7 @@ function legal_menu() {
     'type' => MENU_CALLBACK,
     'file' => 'legal.pages.inc',
   );
+
   $items['legal_accept/%/%'] = array(
     'title' => 'Terms and Conditions',
     'page callback' => 'drupal_get_form',
@@ -77,12 +100,19 @@ function legal_theme() {
 
 function legal_display_fields($conditions) {
   $form = array();
-
   $accept_label = t('<strong>Accept</strong> Terms & Conditions of Use');
 
   $form['current_id'] = array(
     '#type' => 'value',
-    '#value' => $conditions['tc_id'],
+    '#value' => $conditions['version'],
+  );
+  $form['language_value'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['language'],
+  );
+  $form['revision_id'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['revision'],
   );
   $form['current_date'] = array(
     '#type' => 'value',
@@ -175,10 +205,11 @@ function theme_legal_page($form) {
  */
 function legal_user($op, &$edit, &$account, $category = FALSE) {
   global $user;
+  global $language;
 
   switch ($op) {
     case 'register':
-      $conditions = legal_get_conditions();
+      $conditions = legal_get_conditions($language->language);
 
       // Do nothing if there's no Terms and Conditions text set.
       if (empty($conditions['conditions'])) {
@@ -193,6 +224,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
       if (!empty($user->uid)) {
         $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
         $form_fields['legal']['legal_accept']['#required'] = FALSE;
+
         foreach ($conditions['extras'] as $key => $label) {
           if (!empty($label)) {
             $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
@@ -208,15 +240,32 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
       return $form;
 
     case 'login':
-      $conditions = legal_get_conditions();
-      if (empty($conditions['conditions'])) {
-        return;
-      }
+	    if ($user->uid == 1) {
+	      break;
+	    }  
 
-      $accepted = legal_version_check($user->uid, $conditions['tc_id']);
-      if ($accepted == TRUE || $user->uid == 1) {
-        break;
-      }
+      // get last accepted version for this account
+    	$legal_account = legal_get_accept($user->uid);
+
+			// if no version has been accepted yet, get version with current language revision
+			if (empty($legal_account['version'])) {
+				$conditions = legal_get_conditions($language->language);
+	      // no conditions set yet
+				if (empty($conditions['conditions'])) return;	
+			}
+			else { // get version / revision of last accepted language
+
+				$conditions = legal_get_conditions($legal_account['language']);
+				// no conditions set yet 
+	      if (empty($conditions['conditions'])) return;
+	
+        // Check latest version of T&C has been accepted.
+        $accepted = legal_version_check($user->uid, $conditions['version'], $conditions['revision'], $legal_account);
+
+				if ($accepted) {
+					return;
+				}
+			}
 
       $uid = $user->uid;
 
@@ -230,84 +279,102 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
 
       $signatory = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $uid, 0, 1));
 
-      drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->password . $signatory->login));
+      drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->pass . $signatory->login));
       break;
 
     case 'form':
-      $conditions = legal_get_conditions();
-      if (empty($conditions['conditions'])) {
-        return;
-      }
 
-      if ($category == 'account') {
-        $form_fields = legal_display_fields($conditions);
+      if ($category != 'account') return;
+	
+      // get last accepted version for this account
+      $legal_account = legal_get_accept($account->uid);
 
+			// if no version has been accepted yet, get version with current language revision
+			if (empty($legal_account['version'])) {
+				$conditions = legal_get_conditions($language->language);
+	      // no conditions set yet
+				if (empty($conditions['conditions'])) return;	
+			}
+			else { // get version / revision of last accepted language
+
+				$conditions = legal_get_conditions($legal_account['language']);
+				// no conditions set yet 
+	      if (empty($conditions['conditions'])) return;
+	
         // Check latest version of T&C has been accepted.
-        $accepted = legal_version_check($account->uid, $conditions['tc_id']);
+        $accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision'], $legal_account);
 
-        if ($accepted == TRUE) {
-          $form_fields['legal']['legal_accept']['#value'] = 1;
-          if (!empty($conditions['extras'])) {
-            foreach ($conditions['extras'] as $key => $label) {
-              if (!empty($label)) {
-                $form_fields['legal'][$key]['#value'] = 1;
-              }
-            }
-          }
-        }
+				// enable language switching if version accepted and revision up to date
+				if ($accepted && $legal_account['language'] != $language->language) {
+					$conditions = legal_get_conditions($language->language);
+				}
+			}
 
-        // Disable checkbox if:
-        //  - user is not account owner;
-        //  - latest T&C has already been accepted.
-        if ($account->uid != $user->uid || $accepted  == TRUE) {
-          $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
-          if (!empty($conditions['extras'])) {
-            reset($conditions['extras']);
-            foreach ($conditions['extras'] as $key => $label) {
-              if (!empty($label)) {
-                $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
-              }
-            }
-          }
-        }
+       $form_fields = legal_display_fields($conditions);
 
-        // Not required if user is not account owner.
-        if ($account->uid != $user->uid) {
-          $form_fields['legal']['legal_accept']['#required'] = FALSE;
-          if (!empty($conditions['extras'])) {
-            reset($conditions['extras']);
-            foreach ($conditions['extras'] as $key => $label) {
-              if (!empty($label)) {
-                $form_fields['legal'][$key]['#required'] = FALSE;
-              }
-            }
-          }
-        }
+       if ($accepted == TRUE) {
+         $form_fields['legal']['legal_accept']['#value'] = 1;
+         if (!empty($conditions['extras'])) {
+           foreach ($conditions['extras'] as $key => $label) {
+             if (!empty($label)) {
+               $form_fields['legal'][$key]['#value'] = 1;
+             }
+           }
+         }
+       }
 
-        // Enable account owner to accept.
-        if ($account->uid == $user->uid && $accepted != TRUE) {
-          $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
-          $form_fields['legal']['legal_accept']['#required'] = TRUE;
+       // Disable checkbox if:
+       //  - user is not account owner;
+       //  - latest T&C has already been accepted.
+       if ($account->uid != $user->uid || $accepted  == TRUE) {
+         $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
+         if (!empty($conditions['extras'])) {
+           reset($conditions['extras']);
+           foreach ($conditions['extras'] as $key => $label) {
+             if (!empty($label)) {
+               $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
+             }
+           }
+         }
+       }
 
-          if (!empty($conditions['extras'])) {
-            reset($conditions['extras']);
-            foreach ($conditions['extras'] as $key => $label) {
-              if (!empty($label)) {
-                $form_fields['legal'][$key]['#default_value'] = $edit[$key];
-                $form_fields['legal'][$key]['#required'] = TRUE;
-              }
-            }
-          }
-        }
+       // Not required if user is not account owner.
+       if ($account->uid != $user->uid) {
+         $form_fields['legal']['legal_accept']['#required'] = FALSE;
+         if (!empty($conditions['extras'])) {
+           reset($conditions['extras']);
+           foreach ($conditions['extras'] as $key => $label) {
+             if (!empty($label)) {
+               $form_fields['legal'][$key]['#required'] = FALSE;
+             }
+           }
+         }
+       }
 
-        $form = theme('legal_display', $form_fields);
-        return $form;
-      }
+       // Enable account owner to accept.
+       if ($account->uid == $user->uid && $accepted != TRUE) {
+         $form_fields['legal']['legal_accept']['#default_value'] = isset($edit['legal_accept']) ? $edit['legal_accept'] : '';
+         $form_fields['legal']['legal_accept']['#required'] = TRUE;
+
+         if (!empty($conditions['extras'])) {
+           reset($conditions['extras']);
+           foreach ($conditions['extras'] as $key => $label) {
+             if (!empty($label)) {
+               $form_fields['legal'][$key]['#default_value'] = $edit[$key];
+               $form_fields['legal'][$key]['#required'] = TRUE;
+             }
+           }
+         }
+       }
+
+       $form = theme('legal_display', $form_fields);
+       return $form;
 
       break;
 
     case 'insert':
-      $conditions = legal_get_conditions();
+      $conditions = legal_get_conditions($language->language);
+
       if (empty($conditions['conditions'])) {
         return;
       }
@@ -325,11 +392,11 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         break;
       }
 
-      legal_save_accept($account->uid, $conditions['tc_id']);
+      legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
       break;
 
     case 'update':
-      $conditions = legal_get_conditions();
+      $conditions = legal_get_conditions($language->language);
       if (empty($conditions['conditions'])) {
         return;
       }
@@ -346,13 +413,13 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
       }
 
       // If already accepted skip data entry.
-      $accepted = legal_version_check($account->uid, $conditions['tc_id']);
+      $accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision']);
 
       if ($accepted == TRUE) {
         break;
       }
 
-      legal_save_accept($account->uid, $conditions['tc_id']);
+      legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
       break;
   }
 }
@@ -361,20 +428,61 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
  * Require registered users to accept new T&C.
  */
 function legal_login($constructor, $uid, $id_hash = NULL) {
-  $conditions = legal_get_conditions();
+  global $language;
+
+	// get last accepted version for this account
+	$legal_account = legal_get_accept($uid);
+
+	// if no version has been accepted yet, get version with current language revision
+	if (empty($legal_account['version'])) {
+		$conditions = legal_get_conditions($language->language);
+	  // no conditions set yet
+		if (empty($conditions['conditions'])) return;	
+	}
+	else { // get version / revision of last accepted language
+
+		$conditions = legal_get_conditions($legal_account['language']);
+		// no conditions set yet 
+	  if (empty($conditions['conditions'])) return;
+
+	  // Check latest version of T&C has been accepted.
+	  $accepted = legal_version_check($uid, $conditions['version'], $conditions['revision'], $legal_account);
+
+		if ($accepted) {
+			return;
+		}
+	}
+	
   $form = legal_display_fields($conditions);
 
   $form['uid'] = array(
     '#type' => 'value',
     '#value' => $uid,
   );
+
   $form['id_hash'] = array(
     '#type' => 'value',
     '#value' => $id_hash,
   );
+
   $form['tc_id'] = array(
     '#type' => 'value',
     '#value' => $conditions['tc_id'],
+  );
+
+  $form['version'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['version'],
+  );
+
+  $form['revision'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['revision'],
+  );
+
+  $form['language'] = array(
+    '#type' => 'value',
+    '#value' => $conditions['language'],
   );
 
   $form = legal_display_changes($form, $uid);
@@ -389,7 +497,7 @@ function legal_login($constructor, $uid, $id_hash = NULL) {
 
 function legal_login_validate($form, &$form_state) {
   $account = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $form_state['values']['uid'], 0, 1));
-  $id_hash = md5($account->name . $account->password . $account->login);
+  $id_hash = md5($account->name . $account->pass . $account->login);
 
   if ($id_hash != $form_state['values']['id_hash']) {
     form_set_error('legal_accept', t('User ID cannot be identified.'));
@@ -399,10 +507,11 @@ function legal_login_validate($form, &$form_state) {
 
 function legal_login_submit($form, &$form_state) {
   global $user;
-  $user = user_load(array('uid' => $form_state['values']['uid']));
+	$values = $form_state['values'];
+  $user = user_load(array('uid' => $values['uid']));
 
-  legal_save_accept($user->uid, $form_state['values']['tc_id']);
-  watchdog('legal', '%name accepted T&C version %tc_id.', array('%name' => $user->name, '%tc_id' => $form_state['values']['tc_id']));
+  legal_save_accept($values['version'], $values['revision'], $values['language'], $user->uid);
+  watchdog('legal', '%name accepted T&C version %tc_id.', array('%name' => $user->name, '%tc_id' => $values['tc_id']));
 
   // Update the user table timestamp noting user has logged in.
   db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
@@ -417,13 +526,14 @@ function legal_login_submit($form, &$form_state) {
 function theme_legal_login($form) {
   $form = theme('legal_display', $form);
 
-  $output .= '<p>' . t('To continue to use this site please read the Terms & Conditions below, and complete the form to confirm your acceptance.' ) . '</p>';
+  $output = '<p>' . t('To continue to use this site please read the Terms & Conditions below, and complete the form to confirm your acceptance.') . '</p>';
 
-  if ($form['changes']) {
+  if (isset($form['changes']['#value'])) {
     foreach (element_children($form['changes']) as $key) {
       $form['changes'][$key]['#prefix'] .= '<li>';
       $form['changes'][$key]['#suffix'] .= '</li>';
     }
+
     $form['changes']['start_list'] = array('#value' => '<ul>', '#weight' => 0);
     $form['changes']['end_list'] = array('#value' => '</ul>', '#weight' => 3);
     $output .= drupal_render($form['changes']);
@@ -437,18 +547,30 @@ function theme_legal_login($form) {
 }
 
 function legal_get_accept($uid) {
-  $accept = db_fetch_object(db_query_range("SELECT * FROM {legal_accepted} WHERE uid = '%d' ORDER BY legal_id DESC", $uid, 0, 1));
+	$keys = array('legal_id', 'version', 'revision', 'language', 'uid', 'accepted');
+  $result = db_fetch_array(db_query_range("SELECT * FROM {legal_accepted} WHERE uid = %d ORDER BY version DESC, revision DESC", $uid, 0, 1));
+
+	foreach ($keys as $key) {
+		$accept[$key] = $result[$key]; 
+	}
+	
   return $accept;
 }
 
-
-function legal_save_accept($uid, $tc_id) {
-  db_query("INSERT INTO {legal_accepted} (legal_id, uid, tc_id, accepted) VALUES (NULL, '%d', '%d', '%d')", $uid, $tc_id, time());
+function legal_save_accept($version, $revision, $language, $uid) {
+  db_query("INSERT INTO {legal_accepted} (version, revision, language, uid, accepted) VALUES (%d, %d, '%s', %d, %d)", $version, $revision, $language, $uid, time());
 }
 
-function legal_get_conditions() {
-	$keys = array('tc_id', 'conditions', 'date', 'extras', 'changes');
-	$result = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));
+function legal_get_conditions($language = NULL) {
+	$keys = array('tc_id', 'version', 'revision', 'language', 'conditions', 'date', 'extras', 'changes');
+ 
+	if (!empty($language)) {
+    $args[] = $language;
+		$result = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} WHERE language = '%s' ORDER BY version DESC, revision DESC", $args, 0, 1));	
+	}
+	else {
+		$result = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));	
+	}
 
 	foreach ($keys as $key) {
 		$conditions[$key] = isset($result[$key]) ? $result[$key] : '';
@@ -458,33 +580,19 @@ function legal_get_conditions() {
   return $conditions;
 }
 
-function legal_conditions_updated($new) {
-  $old = legal_get_conditions();
-  if ($old['conditions'] != $new['conditions']) {
-    return TRUE;
-  }
-
-  $count = count($new['extras']);
-
-  for ($counter = 1; $counter <= $count; $counter++) {
-    if ($old['extras']['extras-' . $counter] != $new['extras']['extras-' . $counter]) {
-      return TRUE;
-    }
-  }
-
-  return FALSE;
-}
-
 /**
  * Get all changes since user last accepted.
  */
 function legal_display_changes($form, $uid) {
+	$is_list = FALSE;
   $last_accepted = legal_get_accept($uid);
+
   if (empty($last_accepted)) {
     return $form;
   }
 
-  $results = db_query("SELECT * FROM {legal_conditions} WHERE tc_id > %d ORDER BY tc_id DESC", $last_accepted->tc_id);
+  $results = db_query("SELECT * FROM {legal_conditions} WHERE version > %d AND language = '%s' ORDER BY revision DESC", $last_accepted['version'], $last_accepted['language']);
+
   if (empty($results)) {
     return $form;
   }
@@ -522,7 +630,33 @@ function legal_display_changes($form, $uid) {
 /**
  * Check if user has accepted latest version of T&C.
  */
-function legal_version_check($uid, $current_tc_id) {
-  $legal_account = legal_get_accept($uid);
-  return ($legal_account->tc_id == $current_tc_id);
+function legal_version_check($uid, $version, $revision, $legal_account = array()) {
+
+  if (empty($legal_account)) $legal_account = legal_get_accept($uid);
+
+  if ($legal_account['version'] == $version && $legal_account['revision'] == $revision) {
+		$accepted = TRUE;
+	} 
+	else {
+		$accepted = FALSE;
+	} 
+
+  return $accepted;
+}
+
+/**
+ * Access control callback. 
+ * Check that Locale module is enabled and user has access permission.
+ */
+function legal_languages_access($perm) {
+
+  if (!module_exists('locale')) {
+		return FALSE;
+	}
+	
+	if (!user_access($perm)) {
+		return FALSE; 
+	}
+	
+	return TRUE;
 }
