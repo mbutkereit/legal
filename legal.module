@@ -518,6 +518,8 @@ function legal_login_submit($form, &$form_state) {
 
   // User has new permissions, so we clear their menu cache.
   cache_clear_all($user->uid, 'cache_menu', TRUE);
+  // fixes login problems in Pressflow
+  sess_regenerate();
 
   user_module_invoke('login', $edit, $user);
   $form_state['redirect'] = 'user/'. $user->uid;
