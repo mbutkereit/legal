@@ -587,15 +587,32 @@ function legal_get_conditions($language = NULL) {
  */
 function legal_display_changes($form, $uid) {
 	$is_list = FALSE;
+	$bullet_points = array();
   $last_accepted = legal_get_accept($uid);
 
   if (empty($last_accepted)) {
     return $form;
   }
 
-  $results = db_query("SELECT * FROM {legal_conditions} WHERE version > %d AND language = '%s' ORDER BY revision DESC", $last_accepted['version'], $last_accepted['language']);
+  $result = db_query("SELECT changes FROM {legal_conditions} 
+												WHERE ((version > %d) OR (version = %d AND revision > %d)) AND language = '%s' 
+												ORDER BY revision ASC, version ASC", $last_accepted['version'], $last_accepted['version'], $last_accepted['revision'], $last_accepted['language']);
 
-  if (empty($results)) {
+  if (empty($result)) {
+    return $form;
+  }
+
+	while ($term = db_fetch_object($result)) {
+
+    $changes = filter_xss_admin($term->changes);
+
+		if (!empty($changes)) {
+			$bullet_points = array_merge($bullet_points, explode("\r\n", $changes));
+			//$bullet_points = $bullet_points + explode("\r\n", $changes); 
+		}
+  }
+
+  if (empty($bullet_points)) {
     return $form;
   }
 
@@ -608,23 +625,9 @@ function legal_display_changes($form, $uid) {
     '#tree' => TRUE,
   );
 
-  while ($conditions = db_fetch_object($results)) {
-    unset($changes);
-    if (!empty($conditions->changes)) {
-      $changes = explode("\r\n", $conditions->changes);
-      foreach($changes as $change) {
-        $form['changes'][] = array(
-          '#value' => filter_xss_admin($change),
-          '#weight' => 2,
-        );
-        $is_list = TRUE;
-      }
-    }
-  }
-
-  if (!$is_list) {
-    $form['changes'] = NULL;
-  }
+	$form['changes']['bullet_points'] = array(
+	  '#value' => theme('item_list', $bullet_points),
+	);
 
   return $form;
 }
