@@ -132,12 +132,20 @@ function legal_update_6003() {
   db_add_field($ret, 'legal_accepted', 'revision', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_add_field($ret, 'legal_accepted', 'language', array('type' => 'varchar', 'length' => '12', 'not null' => TRUE, 'default' => ''));
 
+	if (module_exists('locale')) {
+	  $language = language_default('language');
+
+	}
+	else {
+		$language = 'en';
+	}
+
   $ret[] = update_sql('UPDATE {legal_conditions} SET version = tc_id');
   $ret[] = update_sql('UPDATE {legal_conditions} SET revision = 1');
-  $ret[] = update_sql("UPDATE {legal_conditions} SET language = 'en'");
+  $ret[] = update_sql("UPDATE {legal_conditions} SET language = '$language'");
   $ret[] = update_sql('UPDATE {legal_accepted} SET version = tc_id');
   $ret[] = update_sql('UPDATE {legal_accepted} SET revision = 1');
-  $ret[] = update_sql("UPDATE {legal_accepted} SET language = 'en'");
+  $ret[] = update_sql("UPDATE {legal_accepted} SET language = '$language'");
 
   db_drop_field($ret, 'legal_accepted', 'tc_id'); 
 
