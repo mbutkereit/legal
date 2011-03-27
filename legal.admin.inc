@@ -230,7 +230,7 @@ function theme_legal_administration($form) {
 			$language = check_plain($languages[$language]);
 		}
 
-    $output = '<h4>'. t('Current Version') .'</h4>';
+    $output = '<h4>'. t('Most Recent Version/Revision') .'</h4>';
     $output .= '<p><strong>'. t('Version ID:') .'</strong> '. $form['current_id']['#value'] .'<br />';
     if (!empty($language)) $output .= '<strong>'. t('Language:') .'</strong> '. $language .'<br />';
     if (!empty($language)) $output .= '<strong>'. t('Revision:') .'</strong> '. $form['revision_id']['#value'] .'<br />';

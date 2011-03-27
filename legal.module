@@ -48,7 +48,7 @@ function legal_menu() {
   );
 
 	$items['admin/settings/legal/terms'] = array(
-	  'title' => 'Current Terms',
+	  'title' => 'Add Terms & Conditions',
 	  'access arguments' => array('administer Terms and Conditions'),
 	  'description' => 'Display Terms and Conditions statement on the registration page.',
 	  'type' => MENU_DEFAULT_LOCAL_TASK, 
