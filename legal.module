@@ -312,7 +312,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
 
        $form_fields = legal_display_fields($conditions);
 
-       if ($accepted == TRUE) {
+       if ($accepted === TRUE) {
          $form_fields['legal']['legal_accept']['#value'] = 1;
          if (!empty($conditions['extras'])) {
            foreach ($conditions['extras'] as $key => $label) {
@@ -415,7 +415,7 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
       // If already accepted skip data entry.
       $accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision']);
 
-      if ($accepted == TRUE) {
+      if ($accepted === TRUE) {
         break;
       }
 
