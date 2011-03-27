@@ -134,7 +134,6 @@ function legal_update_6003() {
 
 	if (module_exists('locale')) {
 	  $language = language_default('language');
-
 	}
 	else {
 		$language = 'en';
