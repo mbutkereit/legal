@@ -223,13 +223,15 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
       if (!empty($user->uid)) {
         $form_fields['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
         $form_fields['legal']['legal_accept']['#required'] = FALSE;
-
-        foreach ($conditions['extras'] as $key => $label) {
-          if (!empty($label)) {
-            $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
-            $form_fields['legal'][$key]['#required'] = FALSE;
-          }
-        }
+        
+				if (is_array($conditions['extras'])) {
+	        foreach ($conditions['extras'] as $key => $label) {
+	          if (!empty($label)) {
+	            $form_fields['legal'][$key]['#attributes'] = array('disabled' => 'disabled');
+	            $form_fields['legal'][$key]['#required'] = FALSE;
+	          }
+	        } 
+				}
       }
       else {
         $form_fields['legal']['legal_accept']['#default_value'] = $edit['legal_accept'];
