@@ -360,9 +360,10 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
 
          if (!empty($conditions['extras'])) {
            reset($conditions['extras']);
+
            foreach ($conditions['extras'] as $key => $label) {
              if (!empty($label)) {
-               $form_fields['legal'][$key]['#default_value'] = $edit[$key];
+               $form_fields['legal'][$key]['#default_value'] = isset($edit[$key]) ? $edit[$key] : '';
                $form_fields['legal'][$key]['#required'] = TRUE;
              }
            }
@@ -381,8 +382,9 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         return;
       }
 
+      // Record the accepted state before removing legal_accept from $edit.
+      $accepted = $edit['legal_accept'];
       $edit['legal_accept'] = NULL;
-
       $edit['conditions'] = NULL;
 
       foreach ($conditions['extras'] as $key => $label) {
@@ -394,7 +396,9 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         break;
       }
 
-      legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
+      if ($accepted) {
+        legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
+      }
       break;
 
     case 'update':
@@ -403,6 +407,8 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
         return;
       }
 
+      // Record the accepted state before removing legal_accept from $edit.
+      $accepted = $edit['legal_accept'];
       $edit['legal_accept'] = NULL;
       $edit['conditions'] = NULL;
 
@@ -415,13 +421,15 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
       }
 
       // If already accepted skip data entry.
-      $accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision']);
+      $previously_accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision']);
 
-      if ($accepted === TRUE) {
+      if ($previously_accepted === TRUE) {
         break;
       }
 
-      legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
+      if ($accepted) {
+        legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
+      }
       break;
   }
 }
