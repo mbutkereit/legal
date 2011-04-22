@@ -160,6 +160,8 @@ function legal_preview($form, $form_values) {
       break;
     default: // scroll box (HTML)
       $form['legal']['conditions'] = array(
+				'#id' => 'preview',
+				'#name' => 'preview',
         '#type' => 'textarea',
         '#title' => t('Terms & Conditions'),
         '#value' => $form['conditions']['#value'],
