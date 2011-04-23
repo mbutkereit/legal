@@ -497,6 +497,8 @@ function legal_login($constructor, $uid, $id_hash = NULL) {
 
   $form = legal_display_changes($form, $uid);
 
+	$form['#redirect'] = 'user/'. $uid;
+
   $form['save'] = array(
     '#type' => 'submit',
     '#value' => t('Confirm'),
@@ -532,7 +534,7 @@ function legal_login_submit($form, &$form_state) {
   sess_regenerate();
 
   user_module_invoke('login', $edit, $user);
-  $form_state['redirect'] = 'user/'. $user->uid;
+  //$form_state['redirect'] = 'user/'. $user->uid;
 }
 
 function theme_legal_login($form) {
