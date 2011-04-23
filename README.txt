@@ -8,26 +8,27 @@ Drupal: 6.0.x
 ********************************************************************
 DESCRIPTION:
 
-	A module which displays your Terms & Conditions to users who want to
+    A module which displays your Terms & Conditions to users who want to
     register, and makes sure they accept the T&C before their registration
     is accepted.
 
-	Note: No T&C will be displayed until the T&C text has been input by
-                the administrator.
+    Note: No T&C will be displayed until the T&C text has been input by
+              the administrator.
     
     Each time a new version of the T&C is created all users will be required to 
     accept the new version.
 
-   Note: T&C text should only be entered by administrators or other highly trusted users.
-             filter_xss_admin() is used to filter content for display, this is a very permissive 
-             XSS/HTML filter intended for admin-only use.
+    Note: T&C text should only be entered by administrators or other highly trusted users.
+              filter_xss_admin() is used to filter content for display, this is a very permissive 
+              XSS/HTML filter intended for admin-only use.
 
-
+   Integrates with Views, and ships with 2 default vies that display T&C history, and user 
+   acceptance of T&Cs.
 
 ********************************************************************
 INSTALLATION:
 
-	Note: It is assumed that you have Drupal up and running.  Be sure to
+    Note: It is assumed that you have Drupal up and running.  Be sure to
     check the Drupal web site if you need assistance.  If you run into
     problems, you should always read the INSTALL.txt that comes with the
     Drupal package and read the online documentation.
