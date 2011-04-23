@@ -48,7 +48,7 @@ function legal_menu() {
   );
 
 	$items['admin/settings/legal/terms'] = array(
-	  'title' => 'Add Terms & Conditions',
+	  'title' => 'Add T&C',
 	  'access arguments' => array('administer Terms and Conditions'),
 	  'description' => 'Display Terms and Conditions statement on the registration page.',
 	  'type' => MENU_DEFAULT_LOCAL_TASK, 
@@ -618,7 +618,6 @@ function legal_display_changes($form, $uid) {
 
 		if (!empty($changes)) {
 			$bullet_points = array_merge($bullet_points, explode("\r\n", $changes));
-			//$bullet_points = $bullet_points + explode("\r\n", $changes); 
 		}
   }
 
@@ -674,4 +673,14 @@ function legal_languages_access($perm) {
 	}
 	
 	return TRUE;
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function legal_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'legal') . '/views',
+  );
 }
