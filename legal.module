@@ -277,11 +277,22 @@ function legal_user($op, &$edit, &$account, $category = FALSE) {
 
       // We have to use $GLOBALS to unset a global variable.
       $user = user_load(array('uid' => 0));
+
+			$query = NULL;
+      // deal with destination from password reset one time login link
+			if (arg(0) == 'user' && arg(1) == 'reset') {
+				$query = array('destination' => "user/$uid/edit");
+			}
+			
+			if (!empty($_REQUEST['destination'])) {
+				$query = array('destination' => $_REQUEST['destination']);
+			}
+
       unset($_REQUEST['destination']);
 
       $signatory = db_fetch_object(db_query_range('SELECT * FROM {users} WHERE uid = %d', $uid, 0, 1));
 
-      drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->pass . $signatory->login));
+      drupal_goto('legal_accept/' . $signatory->uid . '/' . md5($signatory->name . $signatory->pass . $signatory->login), $query);
       break;
 
     case 'form':
@@ -497,7 +508,13 @@ function legal_login($constructor, $uid, $id_hash = NULL) {
 
   $form = legal_display_changes($form, $uid);
 
-	$form['#redirect'] = 'user/'. $uid;
+	$redirect = 'user/'. $uid;
+	
+	if (!empty($_GET['destination'])) {
+		$redirect = $_GET['destination']; 
+	}
+
+	$form['#redirect'] = $redirect;
 
   $form['save'] = array(
     '#type' => 'submit',
@@ -534,7 +551,6 @@ function legal_login_submit($form, &$form_state) {
   sess_regenerate();
 
   user_module_invoke('login', $edit, $user);
-  //$form_state['redirect'] = 'user/'. $user->uid;
 }
 
 function theme_legal_login($form) {
