@@ -22,7 +22,7 @@ DESCRIPTION:
               filter_xss_admin() is used to filter content for display, this is a very permissive 
               XSS/HTML filter intended for admin-only use.
 
-   Integrates with Views, and ships with 2 default vies that display T&C history, and user 
+   Integrates with Views, and ships with 2 default views that display T&C history, and user 
    acceptance of T&Cs.
 
 ********************************************************************

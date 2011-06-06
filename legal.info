@@ -5,3 +5,10 @@ core = 6.x
 
 
 
+
+; Information added by drupal.org packaging script on 2011-04-23
+version = "6.x-8.4"
+core = "6.x"
+project = "legal"
+datestamp = "1303525917"
+

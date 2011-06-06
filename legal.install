@@ -1,7 +1,13 @@
 <?php
+// $Id$
 
 /**
- * Implementation of hook_install()
+ * @file
+ * Installation and update functions for the Legal module.
+ */
+
+/**
+ * Implementation of hook_install();
  */
 function legal_install() {
   drupal_install_schema('legal');
@@ -16,13 +22,13 @@ function legal_schema() {
       'tc_id' => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
       'version' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
       'revision' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
-    	'language' => array(
-      	'description' => t("TODO."),
-      	'type' => 'varchar',
-      	'length' => '12',
-      	'not null' => TRUE,
-      	'default' => ''
-    	),
+        'language' => array(
+          'description' => t("TODO."),
+          'type' => 'varchar',
+          'length' => '12',
+          'not null' => TRUE,
+          'default' => ''
+        ),
       'conditions'  => array('type' => 'text', 'size' => 'big', 'not null' => TRUE),
       'date'        => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
       'extras'      => array('type' => 'text'),
@@ -36,13 +42,13 @@ function legal_schema() {
       'legal_id'  => array('type' => 'serial', 'unsigned' => FALSE, 'not null' => TRUE, 'disp-width' => 10),
       'version' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
       'revision' => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
-    	'language' => array(
-      	'description' => t("TODO."),
-      	'type' => 'varchar',
-      	'length' => '12',
-      	'not null' => TRUE,
-      	'default' => ''
-    	),
+        'language' => array(
+          'description' => t("TODO."),
+          'type' => 'varchar',
+          'length' => '12',
+          'not null' => TRUE,
+          'default' => ''
+        ),
       'uid'       => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 10),
       'accepted'  => array('type' => 'int', 'unsigned' => FALSE, 'not null' => TRUE, 'default' => 0, 'disp-width' => 11),
     ),
@@ -67,7 +73,7 @@ function legal_update_1() {
 
 /**
  * Remove conditions and extras from users.data field.
-*/
+ */
 function legal_update_2() {
   // How many users to process each time.
   $limit = 50;
@@ -99,7 +105,8 @@ function legal_update_2() {
         unset($data[$extra]);
       }
     }
-
+    // Don't use update_sql() instead of db_query(), Coder module flags this as a problem but ignore.
+    // http://api.drupal.org/api/drupal/includes--database.inc/function/update_sql/6#comment-354
     db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", serialize($data), $user->uid);
 
     $_SESSION['legal_update_2']['uid'] = $user->uid;
@@ -120,7 +127,7 @@ function legal_update_2() {
 
 /**
  * Add version, revision, and language fields.
-*/
+ */
 function legal_update_6003() {
 
   $ret = array();
@@ -132,12 +139,12 @@ function legal_update_6003() {
   db_add_field($ret, 'legal_accepted', 'revision', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
   db_add_field($ret, 'legal_accepted', 'language', array('type' => 'varchar', 'length' => '12', 'not null' => TRUE, 'default' => ''));
 
-	if (module_exists('locale')) {
-	  $language = language_default('language');
-	}
-	else {
-		$language = 'en';
-	}
+    if (module_exists('locale')) {
+      $language = language_default('language');
+    }
+    else {
+        $language = 'en';
+    }
 
   $ret[] = update_sql('UPDATE {legal_conditions} SET version = tc_id');
   $ret[] = update_sql('UPDATE {legal_conditions} SET revision = 1');
@@ -146,9 +153,9 @@ function legal_update_6003() {
   $ret[] = update_sql('UPDATE {legal_accepted} SET revision = 1');
   $ret[] = update_sql("UPDATE {legal_accepted} SET language = '$language'");
 
-  db_drop_field($ret, 'legal_accepted', 'tc_id'); 
+  db_drop_field($ret, 'legal_accepted', 'tc_id');
 
-  return $ret;	
+  return $ret;
 }
 
 /**
