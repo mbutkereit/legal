@@ -7,14 +7,7 @@
  */
 
 /**
- * Implementation of hook_install();
- */
-function legal_install() {
-  drupal_install_schema('legal');
-}
-
-/**
- * Implementation of hook_schema().
+ * Implements hook_schema().
  */
 function legal_schema() {
   $schema['legal_conditions'] = array(
@@ -59,109 +52,16 @@ function legal_schema() {
   return $schema;
 }
 
-function legal_update_1() {
-
-  _system_update_utf8(array('legal_accepted', 'legal_conditions'));
-
-  $ret = array();
-
-  db_add_field($ret, 'legal_conditions', 'extras', array('type' => 'text'));
-  db_add_field($ret, 'legal_conditions', 'changes', array('type' => 'text'));
-
-  return $ret;
-}
-
 /**
- * Remove conditions and extras from users.data field.
- */
-function legal_update_2() {
-  // How many users to process each time.
-  $limit = 50;
-
-  // Set-up multipart update.
-  if (!isset($_SESSION['legal_update_2'])) {
-    $conditions = db_fetch_array(db_query_range("SELECT * FROM {legal_conditions} ORDER BY tc_id DESC", 0, 1));
-    if (empty($conditions['conditions'])) return;
-
-    $extras = empty($conditions['extras']) ? NULL : array_keys(unserialize($conditions['extras']));
-
-    $_SESSION['legal_update_2'] = array(
-      'uid' => 0,
-      'max' => db_result(db_query('SELECT MAX(uid) FROM {users}')),
-      'extras' => $extras,
-    );
-  }
-
-  // Fetch up to N users and fix their data field.
-  $result = db_query_range("SELECT uid, data FROM {users} WHERE uid > %d AND data LIKE '%%s:10:\"conditions\"%%'", $_SESSION['legal_update_2']['uid'], 0, $limit);
-  $user_count = 0;
-  while ($user = db_fetch_object($result)) {
-    $data = unserialize($user->data);
-
-    unset($data['conditions']);
-
-    if (!empty($_SESSION['legal_update_2']['extras'])) {
-      foreach ($_SESSION['legal_update_2']['extras'] as $extra) {
-        unset($data[$extra]);
-      }
-    }
-    // Don't use update_sql() instead of db_query(), Coder module flags this as a problem but ignore.
-    // http://api.drupal.org/api/drupal/includes--database.inc/function/update_sql/6#comment-354
-    db_query("UPDATE {users} SET data = '%s' WHERE uid = %d", serialize($data), $user->uid);
-
-    $_SESSION['legal_update_2']['uid'] = $user->uid;
-
-    $user_count++;
-  }
-
-  if ($user_count == $limit) {
-    // Return progress (never return 100% here to ensure clean-up is still run last).
-    return array('#finished' => $_SESSION['legal_update_2']['uid'] / ($_SESSION['legal_update_2']['max'] + 1));
-  }
-  else {
-    // Clean-up.
-    unset($_SESSION['legal_update_2']);
-    return array();
-  }
-}
-
-/**
- * Add version, revision, and language fields.
- */
-function legal_update_6003() {
-
-  $ret = array();
-
-  db_add_field($ret, 'legal_conditions', 'version', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_add_field($ret, 'legal_conditions', 'revision', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_add_field($ret, 'legal_conditions', 'language', array('type' => 'varchar', 'length' => '12', 'not null' => TRUE, 'default' => ''));
-  db_add_field($ret, 'legal_accepted', 'version', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_add_field($ret, 'legal_accepted', 'revision', array('type' => 'int', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0));
-  db_add_field($ret, 'legal_accepted', 'language', array('type' => 'varchar', 'length' => '12', 'not null' => TRUE, 'default' => ''));
-
-    if (module_exists('locale')) {
-      $language = language_default('language');
-    }
-    else {
-        $language = 'en';
-    }
-
-  $ret[] = update_sql('UPDATE {legal_conditions} SET version = tc_id');
-  $ret[] = update_sql('UPDATE {legal_conditions} SET revision = 1');
-  $ret[] = update_sql("UPDATE {legal_conditions} SET language = '$language'");
-  $ret[] = update_sql('UPDATE {legal_accepted} SET version = tc_id');
-  $ret[] = update_sql('UPDATE {legal_accepted} SET revision = 1');
-  $ret[] = update_sql("UPDATE {legal_accepted} SET language = '$language'");
-
-  db_drop_field($ret, 'legal_accepted', 'tc_id');
-
-  return $ret;
-}
-
-/**
- * Implementation of hook_uninstall().
+ * Implements hook_uninstall().
  */
 function legal_uninstall() {
-  drupal_uninstall_schema('legal');
   variable_del('legal_display');
+}
+
+/**
+ * Implements hook_update_last_removed().
+ */
+function legal_update_last_removed() {
+  return 6003;
 }

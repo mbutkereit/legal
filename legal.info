@@ -1,14 +1,6 @@
 name = Legal
 description = Display Terms and Conditions statement on the registration page.
-dependencies[] = checkbox_validate
-core = 6.x
+core = 7.x
+files[] = legal.test
 
-
-
-
-; Information added by drupal.org packaging script on 2011-04-23
-version = "6.x-8.4"
-core = "6.x"
-project = "legal"
-datestamp = "1303525917"
 
