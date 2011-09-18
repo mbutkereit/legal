@@ -203,9 +203,9 @@ function theme_legal_display($variables) {
       $form['legal']['conditions']['#prefix' ] = '<div class="legal-terms">';
       $form['legal']['conditions']['#suffix' ] = '</div>';
     }
-
-    return $form;
   }
+
+	return $form;
 }
 
 function theme_legal_page($variables) {
@@ -574,7 +574,9 @@ function legal_login_validate($form, &$form_state) {
     ->fields('u')
     ->condition('uid', $form_state['values']['uid'])
     ->range(0, 1)
-    ->excute();
+    ->execute()
+    ->fetchAllAssoc('uid');
+
   $account = array_pop($result);
   $id_hash = md5($account->name . $account->pass . $account->login);
 
@@ -586,20 +588,22 @@ function legal_login_validate($form, &$form_state) {
 
 function legal_login_submit($form, &$form_state) {
   global $user;
-    $values = $form_state['values'];
+  $values = $form_state['values'];
   $user = user_load(array('uid' => $values['uid']));
 
   legal_save_accept($values['version'], $values['revision'], $values['language'], $user->uid);
   watchdog('legal', '%name accepted T&C version %tc_id.', array('%name' => $user->name, '%tc_id' => $values['tc_id']));
 
   // Update the user table timestamp noting user has logged in.
-  db_query("UPDATE {users} SET login = '%d' WHERE uid = '%s'", time(), $user->uid);
+  db_update('users')
+    ->fields(array('login' => time()))
+    ->condition('uid', $user->uid)
+    ->execute();
 
   // User has new permissions, so we clear their menu cache.
   cache_clear_all($user->uid, 'cache_menu', TRUE);
   // Fixes login problems in Pressflow.
-  sess_regenerate();
-
+  drupal_session_regenerate();
   user_module_invoke('login', $edit, $user);
 }
 
@@ -705,7 +709,7 @@ function legal_display_changes($form, $uid) {
   }
 
   $result = db_select('legal_conditions', 'lc')
-    ->fields('lc', array('changes'))
+    ->fields('lc')
     ->condition(db_or()
         ->condition('version', $last_accepted['version'], '>')
         ->condition(db_and()
@@ -717,7 +721,7 @@ function legal_display_changes($form, $uid) {
     ->orderBy('revision', 'ASC')
     ->orderBy('version', 'ASC')
     ->execute()
-    ->fetchAllAssoc('lc_id');
+    ->fetchAllAssoc('tc_id');
 
   if (empty($result)) {
     return $form;
@@ -731,7 +735,7 @@ function legal_display_changes($form, $uid) {
       $bullet_points = array_merge($bullet_points, explode("\r\n", $changes));
     } 
   }
-
+ 
   if (empty($bullet_points)) {
     return $form;
   }

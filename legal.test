@@ -12,7 +12,7 @@
 class LegalTestCase extends DrupalWebTestCase {
   function setUp() {
     // Enable any modules required for the test.
-    parent::setUp('checkbox_validate', 'legal');
+    parent::setUp('legal');
   }
 
   /**
@@ -26,7 +26,7 @@ class LegalTestCase extends DrupalWebTestCase {
 
     $this->drupalLogin($admin_user);
 
-    $this->drupalPost('admin/settings/legal', $edit, t('Save'));
+    $this->drupalPost('admin/config/people/legal', $edit, t('Save'));
 
     // Check account wasn't created.
     $this->assertText(t('Terms &amp; Conditions have been saved.'), 'T&C text setup correctly');
@@ -76,7 +76,7 @@ class LegalRegisterTestCase extends LegalTestCase {
     $this->drupalPost('user/register', $edit, t('Create new account'));
 
      // Check account was created.
-    $this->assertText(t('Your password and further instructions have been sent to your e-mail address.'), 'Account created');
+    $this->assertText(t('Thank you for applying for an account. Your account is currently pending approval by the site administrator.'), 'Account created');
   }
 
   /**

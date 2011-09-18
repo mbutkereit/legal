@@ -45,25 +45,24 @@ function legal_views_data() {
     ),
   );
 
-
   $data['legal_accepted']['version'] = array(
-      'title' => t('Version'),
-      'help' => t('Version ID accepted.'),
-      'field' => array(
-        'handler' => 'views_handler_field',
-        'click sortable' => TRUE,
-      ),
-      'filter' => array(
-        'handler' => 'views_handler_filter_numeric',
-        'allow empty' => TRUE,
-      ),
-      'argument' => array(
-        'handler' => 'views_handler_argument_numeric',
-      ),
-      'sort' => array(
-        'handler' => 'views_handler_sort',
-      ),
-    );
+	  'title' => t('Version'),
+	  'help' => t('Version ID accepted.'),
+	  'field' => array(
+	    'handler' => 'views_handler_field',
+	    'click sortable' => TRUE,
+	  ),
+	  'filter' => array(
+	    'handler' => 'views_handler_filter_numeric',
+	    'allow empty' => TRUE,
+	  ),
+	  'argument' => array(
+	    'handler' => 'views_handler_argument_numeric',
+	  ),
+	  'sort' => array(
+	    'handler' => 'views_handler_sort',
+	  ),
+  );
 
   $data['legal_accepted']['revision'] = array(
     'title' => t('Revision'),
@@ -84,24 +83,26 @@ function legal_views_data() {
     ),
   );
 
-  $data['legal_accepted']['language'] = array(
-    'title' => t('Language'),
-    'help' => t('Language of T&C accepted by user.'),
-    'field' => array(
-      'handler' => 'views_handler_field_locale_language',
-      'click sortable' => TRUE,
-    ),
-    'filter' => array(
-      'handler' => 'views_handler_filter_locale_language',
-      'allow empty' => TRUE,
-    ),
-    'argument' => array(
-      'handler' => 'views_handler_argument_locale_language',
-    ),
-    'sort' => array(
-      'handler' => 'views_handler_sort',
-    ),
-  );
+	if (module_exists('locale')) {
+	  $data['legal_accepted']['language'] = array(
+	    'title' => t('Language'),
+	    'help' => t('Language of T&C accepted by user.'),
+	    'field' => array(
+	      'handler' => 'views_handler_field_locale_language',
+	      'click sortable' => TRUE,
+	    ),
+	    'filter' => array(
+	      'handler' => 'views_handler_filter_locale_language',
+	      'allow empty' => TRUE,
+	    ),
+	    'argument' => array(
+	      'handler' => 'views_handler_argument_locale_language',
+	    ),
+	    'sort' => array(
+	      'handler' => 'views_handler_sort',
+	    ),
+	  );
+	}
 
   $data['legal_accepted']['uid'] = array(
       'title' => t('User ID'),
@@ -163,42 +164,24 @@ function legal_views_data() {
         'handler' => 'views_handler_sort',
       ),
     ),
-      'revision' => array(
+    'revision' => array(
       'title' => t('Revision'),
       'help' => t('Revision of T&Cs.'),
       'field' => array(
         'handler' => 'views_handler_field',
-      'click sortable' => TRUE,
-      ),
+        'click sortable' => TRUE,
+        ),
       'filter' => array(
         'handler' => 'views_handler_filter_numeric',
         'allow empty' => TRUE,
-      ),
+        ),
       'argument' => array(
         'handler' => 'views_handler_argument_numeric',
-      ),
-      'sort' => array(
-      'handler' => 'views_handler_sort',
-      ),
-    ),
-      'language' => array(
-        'title' => t('Language'),
-        'help' => t('Language of T&Cs.'),
-        'field' => array(
-          'handler' => 'views_handler_field_locale_language',
-          'click sortable' => TRUE,
-        ),
-        'filter' => array(
-          'handler' => 'views_handler_filter_locale_language',
-          'allow empty' => TRUE,
-        ),
-        'argument' => array(
-          'handler' => 'views_handler_argument_locale_language',
         ),
         'sort' => array(
-          'handler' => 'views_handler_sort',
+        'handler' => 'views_handler_sort',
         ),
-      ),
+    ),
     'conditions' => array(
       'title' => t('Terms & Conditions'),
       'help' => t('Text of T&Cs.'),
@@ -279,6 +262,29 @@ function legal_views_data() {
       ),
     ),
   );
+
+	if (module_exists('locale')) {
+
+	  $data['legal_conditions']['language'] = array( 
+			'title' => t('Language'),
+			'help' => t('Language of T&Cs.'),
+			'field' => array(
+			  'handler' => 'views_handler_field_locale_language',
+			  'click sortable' => TRUE,
+			),
+			'filter' => array(
+			  'handler' => 'views_handler_filter_locale_language',
+			  'allow empty' => TRUE,
+			),
+			'argument' => array(
+			  'handler' => 'views_handler_argument_locale_language',
+			),
+			'sort' => array(
+			  'handler' => 'views_handler_sort',
+			), 
+	  );
+	}
+
   return $data;
 }
 

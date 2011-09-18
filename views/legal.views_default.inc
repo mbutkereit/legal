@@ -302,7 +302,7 @@ function legal_views_default_views() {
       'default' => '-1',
     ));
     $handler = $view->new_display('page', 'Page', 'page_1');
-    $handler->override_option('path', 'admin/settings/legal/terms_history');
+    $handler->override_option('path', 'admin/config/people/legal/terms_history');
     $handler->override_option('menu', array(
       'type' => 'tab',
       'title' => 'T&C History',
@@ -598,7 +598,7 @@ function legal_views_default_views() {
       'default' => '-1',
     ));
     $handler = $view->new_display('page', 'Users', 'page_1');
-    $handler->override_option('path', 'admin/settings/legal/users');
+    $handler->override_option('path', 'admin/config/people/legal/users');
     $handler->override_option('menu', array(
       'type' => 'tab',
       'title' => 'Accepted',
