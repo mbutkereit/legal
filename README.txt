@@ -72,7 +72,10 @@ CONFIGURATION
 
 	Note: When displayed on the page /legal your T&Cs will be automatically 
                 reformatted to HTML Text if entered as a Scroll Box or Scroll Box (CSS)
-       
+
+FACEBOOK CONNECT
+
+In facebook applications, click edit, click on Facebook User Settings. Click on "Do not create accounts Automatically". Then, when user DOES create account, it runs them through the Legal agreement.      
        
        
 ********************************************************************
