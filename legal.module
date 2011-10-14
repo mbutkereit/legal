@@ -553,13 +553,6 @@ function legal_login($form, $constructor, $uid, $id_hash = NULL) {
   );
 
   $form = legal_display_changes($form, $uid);
-  $redirect = 'user/'. $uid;
-
-  if (!empty($_GET['destination'])) {
-    $redirect = $_GET['destination'];
-  }
-
-  $form['#redirect'] = $redirect;
 
   $form['save'] = array(
     '#type' => 'submit',
@@ -590,6 +583,14 @@ function legal_login_submit($form, &$form_state) {
   global $user;
   $values = $form_state['values'];
   $user = user_load(array('uid' => $values['uid']));
+
+	$redirect = 'user/'. $user->uid;
+
+	if (!empty($_GET['destination'])) {
+		$redirect = $_GET['destination'];
+	}
+
+  $form_state['redirect'] = $redirect;
 
   legal_save_accept($values['version'], $values['revision'], $values['language'], $user->uid);
   watchdog('legal', '%name accepted T&C version %tc_id.', array('%name' => $user->name, '%tc_id' => $values['tc_id']));
