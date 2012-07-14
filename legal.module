@@ -768,14 +768,14 @@ function legal_display_changes($form, $uid) {
  * Check if user has accepted latest version of T&C.
  */
 function legal_version_check($uid, $version, $revision, $legal_account = array()) {
+  $accepted = FALSE;
 
   if (empty($legal_account)) $legal_account = legal_get_accept($uid);
 
-  if ($legal_account['version'] == $version && $legal_account['revision'] == $revision) {
-    $accepted = TRUE;
-  }
-  else {
-    $accepted = FALSE;
+  if (array_key_exists('version', $legal_account) && array_key_exists('revision', $legal_account)) {
+	  if ($legal_account['version'] == $version && $legal_account['revision'] == $revision) {
+	    $accepted = TRUE;
+	  }
   }
 
   return $accepted;
