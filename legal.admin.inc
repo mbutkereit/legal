@@ -1,7 +1,5 @@
 <?php
 
-
-
 /**
  * @file
  * Administration functions for the Legal module.

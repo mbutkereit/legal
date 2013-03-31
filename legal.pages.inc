@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * User pages and forms.

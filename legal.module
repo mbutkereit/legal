@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Displays Terms & Conditions, and makes sure they are
- * accepted before registration is accepted.
+ * Module file for Legal.
  */
 
 /**

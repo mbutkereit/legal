@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  *  Views field displaying explanations of changes to T&Cs.

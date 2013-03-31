@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * Default views for the legal module.

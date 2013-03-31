@@ -1,6 +1,5 @@
 <?php
 
-
 /**
  * @file
  * Views handler and plugin definitions for the legal module.
