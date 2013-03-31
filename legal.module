@@ -436,7 +436,7 @@ function legal_user_insert(&$edit, $account, $category) {
   }
 
   // Record the accepted state before removing legal_accept from $edit.
-  $accepted             = $edit['legal_accept'];
+  $accepted             = isset($edit['legal_accept']) ? $edit['legal_accept'] : FALSE;
   $edit['legal_accept'] = NULL;
   $edit['conditions']   = NULL;
 
