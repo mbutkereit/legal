@@ -1,5 +1,5 @@
 <?php
-// $Id$
+
 
 /**
  * @file
@@ -9,7 +9,7 @@
 function legal_page() {
   global $language;
   $conditions = legal_get_conditions($language->language);
-  $output = '';
+  $output     = '';
 
   switch (variable_get('legal_display', '0')) {
     case 0: // Scroll Box.
