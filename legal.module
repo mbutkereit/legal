@@ -105,12 +105,13 @@ function legal_theme() {
     'legal_display'        => array('variables' => array('form' => NULL)),
     'legal_page'           => array('render element' => 'form'),
     'legal_login'          => array('render element' => 'form'),
+    'legal_accept_label' => array('variables' => array('link' => FALSE)),
   );
 }
 
 function legal_display_fields($conditions) {
   $form         = array();
-  $accept_label = t('<strong>Accept</strong> Terms & Conditions of Use');
+  $accept_label = theme('legal_accept_label');
 
   $form['current_id']     = array(
     '#type'  => 'value',
@@ -150,7 +151,7 @@ function legal_display_fields($conditions) {
       $form['legal']['conditions'] = array(
         '#markup' => '',
       );
-      $accept_label                = t('<strong>Accept</strong> <a href="@terms">Terms & Conditions</a> of Use', array('@terms' => url('legal')));
+      $accept_label                = theme('legal_accept_label', array('link' => TRUE));
       break;
 
     default: // Scroll box (HTML).
@@ -213,6 +214,26 @@ function theme_legal_page($variables) {
     $form = theme('legal_display', array('form' => $form));
 
     return drupal_render($form);
+  }
+}
+
+/**
+* Theme the accept terms and conditions label.
+*
+* @param $variables
+*   An associative array of variables for themeing, containing:
+*    - link: Whether or not the label contains a link to the legal page.
+*
+* @ingroup themeable
+*/
+
+function theme_legal_accept_label($variables) {
+
+  if ($variables['link']) {
+    return t('<strong>Accept</strong> <a href="@terms">Terms & Conditions</a> of Use', array('@terms' => url('legal')));
+  }
+  else {
+    return t('<strong>Accept</strong> Terms & Conditions of Use');
   }
 }
 
