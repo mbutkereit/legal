@@ -1,5 +1,6 @@
 name = Legal
 description = Display Terms and Conditions statement on the registration page.
+configure = admin/config/people/legal
 core = 7.x
 files[] = legal.test
 
