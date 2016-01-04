@@ -1,0 +1,8 @@
+name: Legal
+description: 'Display Terms and Conditions statement on the registration page.'
+type: module
+package: Content
+core: 8.x
+
+
+
