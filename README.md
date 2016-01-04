@@ -1,10 +1,10 @@
 ********************************************************************
-D R U P A L    M O D U L E
+DRUPAL MODULE
 ********************************************************************
-Name: Legal Module 
-Author: Robert Castelo
-Sponsor: Code Positive [www.codepositive.com]
-Drupal: 6.0.x
+	Name: Legal Module   
+	Author: Robert Castelo  
+	Sponsor: Code Positive [www.codepositive.com]  
+	Drupal: 8.0.x
 ********************************************************************
 DESCRIPTION:
 
@@ -13,7 +13,7 @@ DESCRIPTION:
     is accepted.
 
     Note: No T&C will be displayed until the T&C text has been input by
-              the administrator.
+          the administrator.
     
     Each time a new version of the T&C is created all users will be required to 
     accept the new version.
@@ -48,7 +48,7 @@ INSTALLATION:
 
 
 ********************************************************************
-CONFIGURATION
+CONFIGURATION:
 
 	1. Go to Administer > User management > Access control
 	    
@@ -64,31 +64,36 @@ CONFIGURATION
     and displayed as text only
 
 	- Scroll Box (CSS) - Scrollable text box created in CSS Text should
-    be entered with HTML formatting. 
-       (less accessible than a standard scroll box)
+      be entered with HTML formatting. 
+      (less accessible than a standard scroll box)
 
 	- HTML Text - Terms & conditions displayed as HTML formatted text
        Text should be entered with HTML formatting
 
-	Note: When displayed on the page /legal your T&Cs will be automatically 
-                reformatted to HTML Text if entered as a Scroll Box or Scroll Box (CSS)
+	  Note: When displayed on the page /legal your T&Cs will be automatically 
+            reformatted to HTML Text if entered as a Scroll Box or Scroll Box (CSS)
+                
 
-FACEBOOK CONNECT
+********************************************************************
+FACEBOOK CONNECT:
 
-In facebook applications, click edit, click on Facebook User Settings. Click on "Do not create accounts Automatically". Then, when user DOES create account, it runs them through the Legal agreement.      
+    In facebook applications, click edit, click on Facebook User Settings.  
+    Click on "Do not create accounts Automatically". 
+
+    Then, when user DOES create account, it runs them through the Legal agreement.      
        
        
 ********************************************************************
 ACKNOWLEDGEMENTS
 
-* Drupal 5 update sponsorship
-Lullabot (http://www.lullabot.com)
-
-* User data variables clean up
-Steven Wittens (Steven)
-
-* T&C Page formatting
-Bryant Mairs (Susurrus) 
+	* Drupal 5 update sponsorship  
+	Lullabot (http://www.lullabot.com)
+	
+	* User data variables clean up  
+	Steven Wittens (Steven)
+	
+	* T&C Page formatting  
+	Bryant Mairs (Susurrus) 
 
 
 
