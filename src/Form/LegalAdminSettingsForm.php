@@ -2,15 +2,75 @@
 
 namespace Drupal\legal\Form;
 
+use Drupal\Core\Cache\CacheBackendInterface;
+use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Database\Connection;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
+use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Component\Utility\Xss;
 
 class LegalAdminSettingsForm extends FormBase {
 
-  public function getFormId() {
-  return 'legal_admin_settings';
+  /**
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
+  /**
+   * @var \Drupal\Core\Config\ConfigFactoryInterface
+   */
+  protected $configFactory;
+
+  /**
+   * @var \Drupal\Core\Cache\CacheBackendInterface
+   */
+  protected $cacheRender;
+
+  /**
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  public function __construct(ModuleHandlerInterface $module_handler,
+                              LanguageManagerInterface $language_manager,
+                              ConfigFactoryInterface $config_factory,
+                              CacheBackendInterface $cache_render,
+                              Connection $database) {
+    $this->moduleHandler = $module_handler;
+    $this->languageManager = $language_manager;
+    $this->configFactory = $config_factory;
+    $this->cacheRender = $cache_render;
+    $this->database = $database;
   }
 
+  /**
+   * {@inheritdoc}
+   */
+  public function getFormId() {
+      return 'legal_admin_settings';
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('module_handler'),
+      $container->get('language_manager'),
+      $container->get('config.factory'),
+      $container->get('cache.render'),
+      $container->get('database')
+      );
+  }
+  
   /**
    * Module settings form.
    */
@@ -18,9 +78,9 @@ class LegalAdminSettingsForm extends FormBase {
       $form       = array();
       $conditions = legal_get_conditions();
 
-      if (\Drupal::moduleHandler()->moduleExists('locale')) {
-        $languages        = \Drupal::languageManager()->getLanguages();
-        $language_default = \Drupal::languageManager()->getDefaultLanguage();
+      if ($this->moduleHandler->moduleExists('locale')) {
+        $languages        = $this->languageManager->getLanguages();
+        $language_default = $this->languageManager->getDefaultLanguage();
         $language         = $language_default->getName();
         $version_options  = array('version' => t('All users (new version)'), 'revision' => t('Language specific users (a revision)'));
         $version_handling = 'version';
@@ -51,7 +111,7 @@ class LegalAdminSettingsForm extends FormBase {
       $form['display'] = array(
         '#type'          => 'radios',
         '#title'         => t('Display Style'),
-        '#default_value' => \Drupal::config('legal.settings')->get('legal_display'),
+        '#default_value' => $this->configFactory->get('legal.settings')->get('legal_display'),
         '#options'       => array(t('Scroll Box'), t('Scroll Box (CSS)'), t('HTML Text'), t('Page Link')),
         '#description'   => t('How terms & conditions should be displayed to users.'),
         '#required'      => TRUE,
@@ -154,8 +214,8 @@ class LegalAdminSettingsForm extends FormBase {
         return;
       }
 
-      if (\Drupal::config('legal.settings')->get('legal_display') != $values['display']) {
-          \Drupal::configFactory()->getEditable('legal.settings')
+      if ($this->configFactory->get('legal.settings')->get('legal_display') != $values['display']) {
+        $this->configFactory->getEditable('legal.settings')
             ->set('legal_display', $values['display'])
             ->save();
         drupal_set_message(t('Display setting has been saved.'));
@@ -182,13 +242,13 @@ class LegalAdminSettingsForm extends FormBase {
 
       // Empty all cache.
       // @todo: is this necessary?
-      \Drupal::cache('render')->deleteAll();
+      $this->cacheRender->deleteAll();
     }
 
   /**
    * Check if T&Cs have been updated.
    */
-  function legal_conditions_updated($new) {
+ protected function legal_conditions_updated($new) {
     $previous_same_language = legal_get_conditions($new['language']);
     $previous               = legal_get_conditions();
 

@@ -22,7 +22,7 @@ function legal_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route
       break;
     case 'legal.config_legal':
       $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register. A <a href="@page">page</a> displaying your T&C will be automatically created, access to this page can be set via the <a href="@access">permissions</a> administration page.',
-        array('@page' => Url::fromRoute('legal.legal')->getUri(), '@access' => Url::fromRoute('user.admin_permissions')->getUri()));
+        array('@page' => Url::fromRoute('legal.legal')->toString(), '@access' => Url::fromRoute('user.admin_permissions')->toString()));
   }
 
   return $output;
@@ -116,8 +116,9 @@ function theme_legal_display($variables) {
   if (!empty($form['legal']['conditions']['#markup'])) {
     // Scroll box (CSS).
     if ($form['display']['#value'] == 1) {
-      $path = base_path() . drupal_get_path('module', 'legal');
-      drupal_add_css(drupal_get_path('module', 'legal') . '/legal.css');
+      $form['legal']['#attached']['css'] = array(
+        drupal_get_path('module', 'legal') . '/legal.css',
+      );
       $form['legal']['conditions']['#prefix'] = '<div class="legal-terms">';
       $form['legal']['conditions']['#suffix'] = '</div>';
     }
@@ -160,10 +161,10 @@ function legal_accept_label($variables) {
  * Implements hook_form_FORM_ID_alter().
  */
 function legal_form_user_register_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
-  global $user;
-  global $language;
+  $user =  \Drupal::currentUser();
+  $language = \Drupal::languageManager()->getCurrentLanguage();
 
-  $conditions = legal_get_conditions($language->language);
+  $conditions = legal_get_conditions($language->getName());
 
   // Do nothing if there's no Terms and Conditions text set.
   if (empty($conditions['conditions'])) {
@@ -195,9 +196,9 @@ function legal_form_user_register_form_alter(&$form, \Drupal\Core\Form\FormState
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function legal_form_user_profile_form_alter(&$form, $form_state) {
-  global $user;
-  global $language;
+function legal_form_user_profile_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  $user =  \Drupal::currentUser();
+  $language = \Drupal::languageManager()->getCurrentLanguage();
   $accepted = FALSE;
 
   if ($form['#user_category'] != 'account') {
@@ -310,9 +311,10 @@ function legal_form_user_profile_form_alter(&$form, $form_state) {
 function legal_user_login($account) {
   $language = \Drupal::languageManager()->getCurrentLanguage();
   $uid = $account->get('uid')->getString();
-  /*if ($uid== 1) {
+
+  if ($uid== 1) {
     return;
-  }*/
+  }
 
   // Get last accepted version for this account
   $legal_account = legal_get_accept($uid);
@@ -392,11 +394,11 @@ function legal_generate_id_hash($uid){
 }
 
 /**
- * Implementation of hook_user_insert().
+ * Implementation of hook_ENTITY_TYPE_insert().
  */
-function legal_user_insert(&$edit, $account, $category) {
-  global $user;
-  global $language;
+function legal_user_insert(Drupal\Core\Entity\EntityInterface $entity) {
+  $user =  \Drupal::currentUser();
+  $language = \Drupal::languageManager()->getCurrentLanguage();
 
   $conditions = legal_get_conditions($language->language);
 
@@ -424,11 +426,11 @@ function legal_user_insert(&$edit, $account, $category) {
 }
 
 /**
- * Implements hook_user_update().
+ * Implements hook_ENTITY_TYPE_update().
  */
-function legal_user_update(&$edit, $account, $category) {
-  global $user;
-  global $language;
+function legal_user_update(Drupal\Core\Entity\EntityInterface $entity) {
+  $user = \Drupal::currentUser();
+  $language = \Drupal::languageManager()->getCurrentLanguage();
 
   // We only care about the account category.
   if ($category != 'account') {

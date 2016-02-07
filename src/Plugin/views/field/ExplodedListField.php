@@ -30,7 +30,7 @@ class ExplodedListField extends FieldPluginBase {
   public function render(ResultRow $values) {
     $build = array(
       '#type' => 'markup',
-      '#markup' =>  "welt",
+      '#markup' =>      $this->field_alias,
     );
     return $build;
     $extras = explode("\r\n", $values->{$this->field_alias});

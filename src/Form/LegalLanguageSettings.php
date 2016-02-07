@@ -5,6 +5,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use \Drupal\Component\Utility\SafeMarkup;
 use \Drupal\Core\Session\AccountInterface;
+use \Drupal\Core\Access\AccessResult;
 
 class LegalLanguageSettings extends FormBase {
 
@@ -33,7 +34,7 @@ class LegalLanguageSettings extends FormBase {
         '#title' => t('Latest Version'),
       );
 
-      $form['latest']['#value'] = theme('table', array('header' => $latest_header, 'rows' => $rows));
+      $form['latest']['#value'] = array('#type' => 'table', '#header' => $latest_header, '#rows' => $rows);
 
       return $form;
   }
@@ -55,9 +56,8 @@ class LegalLanguageSettings extends FormBase {
 
     // get latest version for each language
     if (empty($language)) {
-      $languages = locale_language_list();
-
-      foreach ($languages as $language_id => $language_name) {
+      $languages =  \Drupal::languageManager()->getLanguages();
+      foreach ($languages as $language_id => $language) {
         $result = db_select('legal_conditions', 'lc')
           ->fields('lc')
           ->condition('version', $current_version)
@@ -68,7 +68,7 @@ class LegalLanguageSettings extends FormBase {
           ->fetchAllAssoc('tc_id');
         $row    = count($result) ? (object)array_shift($result) : FALSE;
 
-        $conditions[$language_name] = $this->legal_versions_latest_get_data($row);
+        $conditions[$language->getName()] = $this->legal_versions_latest_get_data($row);
       }
 
     } // get latest version for specific language
@@ -101,7 +101,8 @@ class LegalLanguageSettings extends FormBase {
   }
 
   /**
-   * Checks access for a specific request.
+   * Access control callback.
+   * Check that Locale module is enabled and user has access permission.
    *
    * @param \Drupal\Core\Session\AccountInterface $account
    *   Run access checks for this account.
@@ -109,23 +110,16 @@ class LegalLanguageSettings extends FormBase {
   public function access(AccountInterface $account) {
     // Check permissions and combine that with any custom access checking needed. Pass forward
     // parameters from the route and/or request as needed.
-    /**
-     * Access control callback.
-     * Check that Locale module is enabled and user has access permission.
-     TODO
-    function legal_languages_access($perm) {
 
       if (!\Drupal::moduleHandler()->moduleExists('locale')) {
-        return FALSE;
+        return AccessResult::forbidden();
       }
 
-      if (!\Drupal::currentUser()->hasPermission($perm)) {
+    /*  if (!\Drupal::currentUser()->hasPermission($perm)) {
         return FALSE;
-      }
+      }*/
 
-      return TRUE;
-    }*/
-    return true;
+    return AccessResult::allowed();
   }
 
 

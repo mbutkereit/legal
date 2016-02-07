@@ -253,7 +253,6 @@ function legal_views_data() {
         'title'    => t('Legal terms and conditions'),
         'help'     => 'Versions of the terms and conditions text',
         'weight'   => 10,
-        /*'database' => 'default',*/
       ),
     ),
   );

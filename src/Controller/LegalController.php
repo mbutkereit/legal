@@ -4,6 +4,7 @@ use \Drupal\Component\Utility\Xss;
 use Drupal\Core\Controller\ControllerBase;
 
 class LegalController extends ControllerBase {
+
   public function legalPageAction() {
     $language = \Drupal::languageManager()->getCurrentLanguage();
     $conditions = legal_get_conditions($language->getName());
@@ -19,11 +20,12 @@ class LegalController extends ControllerBase {
         $output = Xss::filterAdmin($conditions['conditions']);
         break;
     }
-    $build = array(
+    $build = [
       '#type' => 'markup',
       '#markup' => $output,
-    );
+    ];
 
     return $build;
   }
+
 }
