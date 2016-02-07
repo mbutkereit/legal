@@ -23,7 +23,7 @@ function legal_views_data() {
     'group'        => t('Legal'),
     'help'         => t('An accepted user'),
     'relationship' => array(
-      'handler'            => 'views_handler_relationship',
+      'id' => 'standard',
       'base'               => 'legal_accepted',
       'base field'         => 'uid',
       'label'              => t('Legal'),
@@ -36,7 +36,7 @@ function legal_views_data() {
     'title'        => t('Legal Conditions relationship'),
     'help'         => t('Create a relationship to a legal conditions and legal accepted.'),
     'relationship' => array(
-      'handler'            => 'views_handler_relationship',
+      'id' => 'standard',
       'base'               => 'legal_conditions',
       'base field'         => 'tc_id',
       'label'              => t('Legal'),
@@ -48,18 +48,18 @@ function legal_views_data() {
     'title'    => t('Version'),
     'help'     => t('Version ID accepted.'),
     'field'    => array(
-      'handler'        => 'views_handler_field',
+      'id' => 'standard',
       'click sortable' => TRUE,
     ),
     'filter'   => array(
-      'handler'     => 'views_handler_filter_numeric',
+      'id' => 'numeric',
       'allow empty' => TRUE,
     ),
     'argument' => array(
-      'handler' => 'views_handler_argument_numeric',
+      'id' => 'numeric',
     ),
     'sort'     => array(
-      'handler' => 'views_handler_sort',
+      'id' => 'standard',
     ),
   );
 
@@ -67,38 +67,38 @@ function legal_views_data() {
     'title'    => t('Revision'),
     'help'     => t('Revision ID accepted.'),
     'field'    => array(
-      'handler'        => 'views_handler_field',
+      'id' => 'standard',
       'click sortable' => TRUE,
     ),
     'filter'   => array(
-      'handler'     => 'views_handler_filter_numeric',
+      'id' => 'numeric',
       'allow empty' => TRUE,
     ),
     'argument' => array(
-      'handler' => 'views_handler_argument_numeric',
+      'id' => 'numeric',
     ),
     'sort'     => array(
-      'handler' => 'views_handler_sort',
+      'id' => 'standard',
     ),
   );
 
-  if (module_exists('locale')) {
+  if (\Drupal::moduleHandler()->moduleExists('locale')) {
     $data['legal_accepted']['language'] = array(
       'title'    => t('Language'),
       'help'     => t('Language of T&C accepted by user.'),
       'field'    => array(
-        'handler'        => 'views_handler_field_locale_language',
+        'id'        => 'language',
         'click sortable' => TRUE,
       ),
       'filter'   => array(
-        'handler'     => 'views_handler_filter_locale_language',
+        'id'     => 'language',
         'allow empty' => TRUE,
       ),
       'argument' => array(
-        'handler' => 'views_handler_argument_locale_language',
+        'id' => 'language',
       ),
       'sort'     => array(
-        'handler' => 'views_handler_sort',
+        'id' => 'standard',
       ),
     );
   }
@@ -107,23 +107,23 @@ function legal_views_data() {
     'title'        => t('User ID'),
     'help'         => t('User ID of user that accepted.'),
     'field'        => array(
-      'handler'        => 'views_handler_field_user',
+      'id'        => 'user_data',
       'click sortable' => TRUE,
     ),
     'filter'       => array(
-      'handler'     => 'views_handler_filter_user_name',
+      'id'     => 'user_name',
       'allow empty' => TRUE,
     ),
     'argument'     => array(
-      'handler' => 'views_handler_argument_user_uid',
+      'id' => 'user_uid',
     ),
     'sort'         => array(
-      'handler' => 'views_handler_sort',
+      'id' => 'standard',
     ),
     'relationship' => array(
       'base'       => 'users',
       'base_field' => 'uid',
-      'handler'    => 'views_handler_relationship',
+      'id' => 'standard',
       'label'      => t('Acceptances to user relationship'),
     ),
   );
@@ -132,15 +132,15 @@ function legal_views_data() {
     'title'  => t('Time Accepted'),
     'help'   => t('Time and date user accepted T&Cs.'),
     'field'  => array(
-      'handler'        => 'views_handler_field_date',
+      'id' => 'date',
       'click sortable' => TRUE,
     ),
     'filter' => array(
-      'handler'     => 'views_handler_filter_date',
+      'id' => 'date',
       'allow empty' => TRUE,
     ),
     'sort'   => array(
-      'handler' => 'views_handler_sort_date',
+      'id' => 'date',
     ),
   );
 
@@ -149,105 +149,101 @@ function legal_views_data() {
       'title'    => t('Version'),
       'help'     => t('Version of T&Cs.'),
       'field'    => array(
-        'handler'        => 'views_handler_field',
+        'id' => 'standard',
         'click sortable' => TRUE,
       ),
       'filter'   => array(
-        'handler'     => 'views_handler_filter_numeric',
+        'id' => 'numeric',
         'allow empty' => TRUE,
       ),
       'argument' => array(
-        'handler' => 'views_handler_argument_numeric',
+        'id' => 'numeric',
       ),
       'sort'     => array(
-        'handler' => 'views_handler_sort',
+        'id' => 'standard',
       ),
     ),
     'revision'   => array(
       'title'    => t('Revision'),
       'help'     => t('Revision of T&Cs.'),
       'field'    => array(
-        'handler'        => 'views_handler_field',
+        'id' => 'standard',
         'click sortable' => TRUE,
       ),
       'filter'   => array(
-        'handler'     => 'views_handler_filter_numeric',
+        'id' => 'numeric',
         'allow empty' => TRUE,
       ),
       'argument' => array(
-        'handler' => 'views_handler_argument_numeric',
+        'id' => 'numeric',
       ),
       'sort'     => array(
-        'handler' => 'views_handler_sort',
+        'id' => 'standard',
       ),
     ),
     'conditions' => array(
       'title'    => t('Terms & Conditions'),
       'help'     => t('Text of T&Cs.'),
       'field'    => array(
-        'handler'        => 'views_handler_field',
+        'id' => 'standard',
         'click sortable' => TRUE,
       ),
       'filter'   => array(
-        'handler'     => 'views_handler_filter_string',
+        'id' => 'string',
         'allow empty' => TRUE,
       ),
       'argument' => array(
-        'handler' => 'views_handler_argument_string',
+        'id' => 'string',
       ),
       'sort'     => array(
-        'handler' => 'views_handler_sort',
+        'id' => 'standard',
       ),
     ),
     'date'       => array(
       'title'  => t('Date Added'),
       'help'   => t('Date T&Cs where added'),
       'field'  => array(
-        'handler'        => 'views_handler_field_date',
-        'click sortable' => TRUE,
+        'id' => 'date',
       ),
       'filter' => array(
-        'handler'     => 'views_handler_filter_date',
-        'allow empty' => TRUE,
+        'id' => 'date',
       ),
       'sort'   => array(
-        'handler' => 'views_handler_sort_date',
+        'id' => 'date',
       ),
     ),
     'extras'     => array(
       'title'    => t('Additional Checkboxes'),
       'help'     => t('Additional terms of T&Cs'),
       'field'    => array(
-        'handler'        => 'legal_views_handler_field_unserialized_list',
-        'click sortable' => TRUE,
+        'id'        => 'unserialized_list',
       ),
       'filter'   => array(
-        'handler'     => 'views_handler_filter_string',
-        'allow empty' => TRUE,
+        'id'     => 'string',
       ),
       'argument' => array(
-        'handler' => 'views_handler_argument_string',
+        'id' => 'string',
       ),
       'sort'     => array(
-        'handler' => 'views_handler_sort',
+        'id' => 'standard',
       ),
     ),
     'changes'    => array(
       'title'    => t('Changes'),
       'help'     => t('Explanation of changes to T&Cs'),
       'field'    => array(
-        'handler'        => 'legal_views_handler_field_exploded_list',
+        'id'        => 'exploded_list',
         'click sortable' => TRUE,
       ),
       'filter'   => array(
-        'handler'     => 'views_handler_filter_string',
+        'id' => 'string',
         'allow empty' => TRUE,
       ),
       'argument' => array(
-        'handler' => 'views_handler_argument_string',
+        'id' => 'string',
       ),
       'sort'     => array(
-        'handler' => 'views_handler_sort',
+        'id' => 'standard',
       ),
     ),
     'table'      => array(
@@ -257,29 +253,29 @@ function legal_views_data() {
         'title'    => t('Legal terms and conditions'),
         'help'     => 'Versions of the terms and conditions text',
         'weight'   => 10,
-        'database' => 'default',
+        /*'database' => 'default',*/
       ),
     ),
   );
 
-  if (module_exists('locale')) {
+  if (\Drupal::moduleHandler()->moduleExists('locale')) {
 
     $data['legal_conditions']['language'] = array(
       'title'    => t('Language'),
       'help'     => t('Language of T&Cs.'),
       'field'    => array(
-        'handler'        => 'views_handler_field_locale_language',
+        'id'        => 'language',
         'click sortable' => TRUE,
       ),
       'filter'   => array(
-        'handler'     => 'views_handler_filter_locale_language',
+        'id'     => 'language',
         'allow empty' => TRUE,
       ),
       'argument' => array(
-        'handler' => 'views_handler_argument_locale_language',
+        'id' => 'language',
       ),
       'sort'     => array(
-        'handler' => 'views_handler_sort',
+        'id' => 'standard',
       ),
     );
   }
@@ -287,21 +283,4 @@ function legal_views_data() {
   return $data;
 }
 
-/**
- * Implements hook_views_handlers();
- */
-function legal_views_handlers() {
-  return array(
-    'info'     => array(
-      'path' => drupal_get_path('module', 'legal') . '/views',
-    ),
-    'handlers' => array(
-      'legal_views_handler_field_unserialized_list' => array(
-        'parent' => 'views_handler_field',
-      ),
-      'legal_views_handler_field_exploded_list'     => array(
-        'parent' => 'views_handler_field',
-      ),
-    ),
-  );
-}
+

@@ -9,20 +9,6 @@
  * Implements hook_views_default_views().
  */
 function legal_views_default_views() {
-  /*
-   * View 'legal_acceptances'
-   */
-
-  $view               = new view;
-  $view->name         = 'legal_terms';
-  $view->description  = 'Legal terms & Conditions';
-  $view->tag          = 'Legal';
-  $view->view_php     = '';
-  $view->base_table   = 'legal_conditions';
-  $view->is_cacheable = FALSE;
-  $view->api_version  = 2;
-  $view->disabled     = FALSE; /* Edit this to true to make a default view disabled initially */
-  $handler            = $view->new_display('default', 'Defaults', 'default');
   $handler->override_option('fields', array(
     'version'    => array(
       'label'        => 'Version',
@@ -268,6 +254,7 @@ function legal_views_default_views() {
       ),
     ),
   ));
+  //todo
   $handler->override_option('access', array(
     'type' => 'perm',
     'perm' => 'administer Terms and Conditions',
@@ -319,6 +306,12 @@ function legal_views_default_views() {
 
   $views[$view->name] = $view;
 
+
+  return $views;
+}
+
+
+function user() {
   $view               = new view;
   $view->name         = 'legal_users';
   $view->description  = '';
@@ -596,6 +589,10 @@ function legal_views_default_views() {
     ),
     'default'  => '-1',
   ));
+
+
+
+
   $handler = $view->new_display('page', 'Users', 'page_1');
   $handler->override_option('path', 'admin/config/people/legal/users');
   $handler->override_option('menu', array(
@@ -614,6 +611,4 @@ function legal_views_default_views() {
   ));
 
   $views[$view->name] = $view;
-
-  return $views;
 }

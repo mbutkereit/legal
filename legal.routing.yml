@@ -1,0 +1,37 @@
+legal.config_legal:
+  path: '/admin/config/people/legal'
+  defaults:
+    _form: '\Drupal\legal\Form\LegalAdminSettingsForm'
+    _title: 'Legal'
+  requirements:
+    _permission: 'administer Terms and Conditions'
+legal.config_terms:
+  path: '/admin/config/people/legal/terms'
+  defaults:
+    _form: '\Drupal\legal\Form\LegalAdminSettingsForm'
+    _title: 'Add T&C'
+  requirements:
+    _permission: 'administer Terms and Conditions'
+legal.config_language:
+  path: '/admin/config/people/legal/languages'
+  defaults:
+    _form: '\Drupal\legal\Form\LegalLanguageSettings'
+    _title: 'Languages'
+  requirements:
+    _custom_access:  '\Drupal\legal\Form\LegalLanguageSettings::access'
+legal.legal:
+  path: '/legal'
+  defaults:
+    _controller: '\Drupal\legal\Controller\LegalController::legalPageAction'
+    _title: 'Terms and Conditions'
+  requirements:
+    _permission: 'view Terms and Conditions'
+legal.legal_login:
+  path: '/legal_accept/{user}/{second}'
+  defaults:
+    _form: '\Drupal\legal\Form\LegalLogin'
+    _title: 'Terms and Conditions'
+  requirements:
+    _permission: 'access content'
+  options:
+    user: \d+

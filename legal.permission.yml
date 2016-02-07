@@ -1,0 +1,6 @@
+'administer Terms and Conditions':
+    title: 'Administer Terms and Conditions'
+    restrict access: TRUE
+'view Terms and Conditions':
+    title: 'View Terms and Conditions'
+    restrict access: TRUE

@@ -1,0 +1,8 @@
+legal.people_legal: # The first plugin ID
+  title: 'Legal'
+  route_name: legal.config_legal
+  base_route: legal.people_legal
+legal.people_legal_languages: # The second plugin ID
+  title: 'Languages'
+  route_name: legal.config_language
+  base_route: legal.people_legal_languages

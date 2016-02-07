@@ -52,13 +52,6 @@ function legal_schema() {
 }
 
 /**
- * Implements hook_uninstall().
- */
-function legal_uninstall() {
-  variable_del('legal_display');
-}
-
-/**
  * Implements hook_update_last_removed().
  */
 function legal_update_last_removed() {
