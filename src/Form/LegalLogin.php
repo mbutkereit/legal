@@ -11,6 +11,23 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * Require registered users to accept new T&C.
  */
 class LegalLogin extends FormBase {
+
+  /**
+   * @var \Drupal\Core\Database\Connection
+   */
+  protected $database;
+
+  /**
+   * @var \Drupal\Core\Extension\ModuleHandlerInterface
+   */
+  protected $moduleHandler;
+
+  /**
+   *
+   * @var \Drupal\Core\Language\LanguageManagerInterface
+   */
+  protected $languageManager;
+
   /**
    * The account the shortcut set is for.
    *

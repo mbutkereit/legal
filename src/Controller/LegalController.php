@@ -6,11 +6,12 @@ use Drupal\Core\Controller\ControllerBase;
 class LegalController extends ControllerBase {
 
   public function legalPageAction() {
-    $language = \Drupal::languageManager()->getCurrentLanguage();
+
+    $language = $this->languageManager()->getCurrentLanguage();
     $conditions = legal_get_conditions($language->getName());
     $output = '';
 
-    switch (\Drupal::config('legal.settings')->get('legal_display')) {
+    switch ($this->config('legal.settings')->get('legal_display')) {
       case 0: // Scroll Box.
         $output = nl2br(strip_tags($conditions['conditions']));
         break;

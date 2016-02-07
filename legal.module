@@ -196,14 +196,12 @@ function legal_form_user_register_form_alter(&$form, \Drupal\Core\Form\FormState
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function legal_form_user_profile_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+function legal_form_user_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   $user =  \Drupal::currentUser();
+
   $language = \Drupal::languageManager()->getCurrentLanguage();
   $accepted = FALSE;
 
-  if ($form['#user_category'] != 'account') {
-    return;
-  }
 
   // Set reminder to change password if coming from one time login link.
   if (isset($_REQUEST['pass-reset-token'])) {
@@ -217,14 +215,17 @@ function legal_form_user_profile_form_alter(&$form, \Drupal\Core\Form\FormStateI
     }
   }
 
-  $account = $form['#user'];
+  $account = $form_state->get('user');
+  $uid = $account->get('uid')->getString();
+
+  $uid_active = \Drupal::currentUser()->id();
 
   // Get last accepted version for this account.
-  $legal_account = legal_get_accept($account->uid);
+  $legal_account = legal_get_accept($uid);
 
   // If no version has been accepted yet, get version with current language revision.
   if (empty($legal_account['version'])) {
-    $conditions = legal_get_conditions($language->language);
+    $conditions = legal_get_conditions($language->getName());
     // No conditions set yet.
     if (empty($conditions['conditions'])) return;
   }
@@ -239,8 +240,8 @@ function legal_form_user_profile_form_alter(&$form, \Drupal\Core\Form\FormStateI
     $accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision'], $legal_account);
 
     // Enable language switching if version accepted and revision up to date.
-    if ($accepted && $legal_account['language'] != $language->language) {
-      $conditions = legal_get_conditions($language->language);
+    if ($accepted && $legal_account['language'] != $language->getName()) {
+      $conditions = legal_get_conditions($language->getName());
     }
   }
 
@@ -260,7 +261,7 @@ function legal_form_user_profile_form_alter(&$form, \Drupal\Core\Form\FormStateI
   // Disable checkbox if:
   //  - user is not account owner;
   //  - latest T&C has already been accepted.
-  if ($account->uid != $user->uid || $accepted == TRUE) {
+  if ($uid_active != $uid || $accepted == TRUE) {
     $form['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
     if (!empty($conditions['extras'])) {
       reset($conditions['extras']);
@@ -273,7 +274,7 @@ function legal_form_user_profile_form_alter(&$form, \Drupal\Core\Form\FormStateI
   }
 
   // Not required if user is not account owner.
-  if ($account->uid != $user->uid) {
+  if ($uid_active != $uid) {
     $form['legal']['legal_accept']['#required'] = FALSE;
     if (!empty($conditions['extras'])) {
       reset($conditions['extras']);
@@ -286,7 +287,7 @@ function legal_form_user_profile_form_alter(&$form, \Drupal\Core\Form\FormStateI
   }
 
   // Enable account owner to accept.
-  if ($account->uid == $user->uid && $accepted != TRUE) {
+  if ($uid_active == $uid && $accepted != TRUE) {
     $form['legal']['legal_accept']['#default_value'] = isset($edit['legal_accept']) ? $edit['legal_accept'] : '';
     $form['legal']['legal_accept']['#required']      = TRUE;
 
@@ -397,31 +398,23 @@ function legal_generate_id_hash($uid){
  * Implementation of hook_ENTITY_TYPE_insert().
  */
 function legal_user_insert(Drupal\Core\Entity\EntityInterface $entity) {
-  $user =  \Drupal::currentUser();
   $language = \Drupal::languageManager()->getCurrentLanguage();
+  if ($entity instanceof Drupal\user\Entity\User) {
+    $conditions = legal_get_conditions($language->getName());
+    if (empty($conditions['conditions'])) {
+      return;
+    }
 
-  $conditions = legal_get_conditions($language->language);
+    // Record the accepted state before removing legal_accept from $edit.
+    $accepted = \Drupal::request()->request->get('legal_accept') ? TRUE : FALSE;
+    // Don't insert if user is already registered (administrator).
+    if (\Drupal::currentUser()->id() != 0) {
+      return;
+    }
 
-  if (empty($conditions['conditions'])) {
-    return;
-  }
-
-  // Record the accepted state before removing legal_accept from $edit.
-  $accepted             = isset($edit['legal_accept']) ? $edit['legal_accept'] : FALSE;
-  $edit['legal_accept'] = NULL;
-  $edit['conditions']   = NULL;
-
-  foreach ($conditions['extras'] as $key => $label) {
-    $edit[$key] = NULL;
-  }
-
-  // Don't insert if user is already registered (administrator).
-  if (!empty($user->uid)) {
-    return;
-  }
-
-  if ($accepted) {
-    legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
+    if ($accepted) {
+      legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $entity->get('uid')->getString());
+    }
   }
 }
 
@@ -429,42 +422,32 @@ function legal_user_insert(Drupal\Core\Entity\EntityInterface $entity) {
  * Implements hook_ENTITY_TYPE_update().
  */
 function legal_user_update(Drupal\Core\Entity\EntityInterface $entity) {
-  $user = \Drupal::currentUser();
-  $language = \Drupal::languageManager()->getCurrentLanguage();
+  if ($entity instanceof Drupal\user\Entity\User) {
+    $language = \Drupal::languageManager()->getCurrentLanguage();
 
-  // We only care about the account category.
-  if ($category != 'account') {
-    return;
-  }
+    $conditions = legal_get_conditions($language->getName());
 
-  $conditions = legal_get_conditions($language->language);
+    if (empty($conditions['conditions'])) {
+      return;
+    }
 
-  if (empty($conditions['conditions'])) {
-    return;
-  }
+    // Record the accepted state before removing legal_accept from $edit.
+    $accepted = \Drupal::request()->request->get('legal_accept') ? TRUE : FALSE;
 
-  // Record the accepted state before removing legal_accept from $edit.
-  $accepted             = isset($edit['legal_accept']) ? $edit['legal_accept'] : FALSE;
-  $edit['legal_accept'] = NULL;
-  $edit['conditions']   = NULL;
+    if (\Drupal::currentUser()->id() != $entity->get('uid')->getString()) {
+      return;
+    }
 
-  foreach ($conditions['extras'] as $key => $label) {
-    $edit[$key] = NULL;
-  }
+    // If already accepted skip data entry.
+    $previously_accepted = legal_version_check($entity->get('uid')->getString(), $conditions['version'], $conditions['revision']);
 
-  if ($account->uid != $user->uid) {
-    return;
-  }
+    if ($previously_accepted === TRUE) {
+      return;
+    }
 
-  // If already accepted skip data entry.
-  $previously_accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision']);
-
-  if ($previously_accepted === TRUE) {
-    return;
-  }
-
-  if ($accepted) {
-    legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $account->uid);
+    if ($accepted) {
+      legal_save_accept($conditions['version'], $conditions['revision'], $conditions['language'], $entity->get('uid')->getString());
+    }
   }
 }
 
