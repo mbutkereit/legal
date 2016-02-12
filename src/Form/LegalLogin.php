@@ -59,7 +59,7 @@ class LegalLogin extends FormBase {
       $legal_account = legal_get_accept($uid);
       // if no version has been accepted yet, get version with current language revision
       if (empty($legal_account['version'])) {
-        $conditions = legal_get_conditions($language->getName());
+        $conditions = legal_get_conditions($language->getId());
         // no conditions set yet
         if (empty($conditions['conditions'])) return;
       }

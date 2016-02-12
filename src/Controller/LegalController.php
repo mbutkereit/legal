@@ -8,7 +8,7 @@ class LegalController extends ControllerBase {
   public function legalPageAction() {
 
     $language = $this->languageManager()->getCurrentLanguage();
-    $conditions = legal_get_conditions($language->getName());
+    $conditions = legal_get_conditions($language->getId());
     $output = '';
 
     switch ($this->config('legal.settings')->get('legal_display')) {

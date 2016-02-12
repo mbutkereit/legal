@@ -164,7 +164,7 @@ function legal_form_user_register_form_alter(&$form, \Drupal\Core\Form\FormState
   $user =  \Drupal::currentUser();
   $language = \Drupal::languageManager()->getCurrentLanguage();
 
-  $conditions = legal_get_conditions($language->getName());
+  $conditions = legal_get_conditions($language->getId());
 
   // Do nothing if there's no Terms and Conditions text set.
   if (empty($conditions['conditions'])) {
@@ -225,7 +225,7 @@ function legal_form_user_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
 
   // If no version has been accepted yet, get version with current language revision.
   if (empty($legal_account['version'])) {
-    $conditions = legal_get_conditions($language->getName());
+    $conditions = legal_get_conditions($language->getId());
     // No conditions set yet.
     if (empty($conditions['conditions'])) return;
   }
@@ -240,8 +240,8 @@ function legal_form_user_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     $accepted = legal_version_check($account->uid, $conditions['version'], $conditions['revision'], $legal_account);
 
     // Enable language switching if version accepted and revision up to date.
-    if ($accepted && $legal_account['language'] != $language->getName()) {
-      $conditions = legal_get_conditions($language->getName());
+    if ($accepted && $legal_account['language'] != $language->getId()) {
+      $conditions = legal_get_conditions($language->getId());
     }
   }
 
@@ -321,7 +321,7 @@ function legal_user_login($account) {
   $legal_account = legal_get_accept($uid);
   // If no version has been accepted yet, get version with current language revision.
   if (empty($legal_account['version'])) {
-    $conditions = legal_get_conditions($language->getName());
+    $conditions = legal_get_conditions($language->getId());
     // No conditions set yet.
     if (empty($conditions['conditions'])) {
       return;
@@ -400,7 +400,7 @@ function legal_generate_id_hash($uid){
 function legal_user_insert(Drupal\Core\Entity\EntityInterface $entity) {
   $language = \Drupal::languageManager()->getCurrentLanguage();
   if ($entity instanceof Drupal\user\Entity\User) {
-    $conditions = legal_get_conditions($language->getName());
+    $conditions = legal_get_conditions($language->getId());
     if (empty($conditions['conditions'])) {
       return;
     }
@@ -425,7 +425,7 @@ function legal_user_update(Drupal\Core\Entity\EntityInterface $entity) {
   if ($entity instanceof Drupal\user\Entity\User) {
     $language = \Drupal::languageManager()->getCurrentLanguage();
 
-    $conditions = legal_get_conditions($language->getName());
+    $conditions = legal_get_conditions($language->getId());
 
     if (empty($conditions['conditions'])) {
       return;

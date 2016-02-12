@@ -68,7 +68,7 @@ class LegalLanguageSettings extends FormBase {
           ->fetchAllAssoc('tc_id');
         $row    = count($result) ? (object)array_shift($result) : FALSE;
 
-        $conditions[$language->getName()] = $this->legal_versions_latest_get_data($row);
+        $conditions[$language->getId()] = $this->legal_versions_latest_get_data($row);
       }
 
     } // get latest version for specific language
