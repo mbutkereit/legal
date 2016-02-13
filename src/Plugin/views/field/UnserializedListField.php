@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of Drupal\legal\Plugin\views\field\NodeTypeFlagger
+ * Definition of Drupal\legal\Plugin\views\field\UnserializedListField
  */
 
 namespace Drupal\legal\Plugin\views\field;
@@ -18,17 +18,15 @@ use Drupal\views\ResultRow;
  * @ViewsField("unserialized_list")
  */
 class UnserializedListField extends FieldPluginBase {
+
   /**
    * @{inheritdoc}
    */
   public function render(ResultRow $values) {
-    $build = array(
-      '#type' => 'markup',
-      '#markup' => t('Hello World!'),
-    );
-    return $build;
     $extras = unserialize($values->{$this->field_alias});
-
-    return theme('item_list', $extras);
+    return [
+      '#theme' => 'item_list',
+      '#items' => $extras,
+    ];
   }
 }

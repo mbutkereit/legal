@@ -593,7 +593,8 @@ function legal_display_changes($form, $uid) {
   );
 
   $form['changes']['bullet_points'] = array(
-    '#markup' => theme('item_list', array('items' => $bullet_points)),
+    '#theme' => 'item_list',
+    '#items' => $bullet_points,
   );
 
   return $form;
@@ -630,10 +631,11 @@ function legal_preview($form,FormStateInterface $form_values) {
       $form['legal']['legal_accept']['#title'] = t('<strong>Accept</strong> Terms & Conditions of Use');
       break;
     case 3: // Page Link.
+      $terms_url = \Drupal::urlGenerator()->generate('legal.legal');
       $form['legal']['conditions']             = array(
         '#markup' => '',
       );
-      $form['legal']['legal_accept']['#title'] = t('<strong>Accept</strong> <a href="@terms">Terms & Conditions</a> of Use', array('@terms' => url('legal')));
+      $form['legal']['legal_accept']['#title'] = t('<strong>Accept</strong> <a href="@terms">Terms & Conditions</a> of Use', array('@terms' => $terms_url));
       break;
     default: // Scroll box (HTML).
       $form['legal']['conditions'] = array(

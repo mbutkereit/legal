@@ -191,6 +191,7 @@ class LegalAdminSettingsForm extends FormBase {
       $form['changes']['changes'] = array(
         '#type'  => 'textarea',
         '#title' => t('Changes'),
+        '#default_value' => !empty($conditions['changes']) ? $conditions['changes'] : '',
       );
 
       $form['#after_build'] = array('legal_preview');

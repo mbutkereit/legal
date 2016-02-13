@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Definition of Drupal\legal\Plugin\views\field\NodeTypeFlagger
+ * Definition of Drupal\legal\Plugin\views\field\ExplodedListField
  */
 
 namespace Drupal\legal\Plugin\views\field;
@@ -18,22 +18,16 @@ use Drupal\views\ResultRow;
  * @ViewsField("exploded_list")
  */
 class ExplodedListField extends FieldPluginBase {
-  /**
-   * {@inheritdoc}
-   */
-  public function query() {
 
-  }
   /**
    * @{inheritdoc}
    */
   public function render(ResultRow $values) {
+    $changes = explode("\r\n", $values->{$this->field_alias});
     $build = array(
-      '#type' => 'markup',
-      '#markup' =>      $this->field_alias,
+      '#theme' => 'item_list',
+      '#items' => $changes,
     );
     return $build;
-    $extras = explode("\r\n", $values->{$this->field_alias});
-    return theme('item_list', $extras);
   }
 }
