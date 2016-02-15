@@ -24,9 +24,27 @@ class UnserializedListField extends FieldPluginBase {
    */
   public function render(ResultRow $values) {
     $extras = unserialize($values->{$this->field_alias});
+
+    // Remove extras without value.
+    $this->removeEmpty($extras);
+
     return [
       '#theme' => 'item_list',
       '#items' => $extras,
     ];
+  }
+
+  /**
+   * Removes all items without value from the extras array.
+   *
+   * @param array $extras
+   *    The array of extras.
+   */
+  private function removeEmpty(array &$extras) {
+    foreach ($extras as $key => $value) {
+      if ($value == '') {
+        unset($extras[$key]);
+      }
+    }
   }
 }
