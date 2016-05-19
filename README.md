@@ -1,3 +1,20 @@
+# D8 - legal
+
+This repo offers a solution that can be installed via composer by adding the following to your `composer.json` file:
+
+```
+"repositories": [
+    {
+        "type": "git",
+        "url": "https://github.com/caxy4/legal"
+    }
+],
+"require": {
+        "drupal/legal": "dev-8.x-1.x",
+},
+```
+
+
 ********************************************************************
 DRUPAL MODULE
 ********************************************************************
