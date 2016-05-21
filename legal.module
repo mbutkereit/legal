@@ -672,7 +672,7 @@ function legal_preview($form, FormStateInterface $form_values)
                 '#name' => 'preview',
                 '#type' => 'textarea',
                 '#title' => t('Terms & Conditions'),
-                '#value' => $form['conditions']['#value'],
+                '#value' => isset($form['conditions']['#value']) ? $form['conditions']['#value'] : NULL ,
                 '#parents' => array('legal'),
                 '#rows' => 10,
                 '#attributes' => array('readonly' => 'readonly'),
