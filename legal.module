@@ -767,7 +767,7 @@ function legal_version($version_handling, $language)
             ->execute()
             ->fetchField();
 
-        $versioning['version'] = $version;
+        $versioning['version'] = empty($version) ? 1 : $version;
         $versioning['revision'] = empty($revision) ? 1 : $revision + 1;
     }
 

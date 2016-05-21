@@ -83,12 +83,15 @@ class LegalAdminSettingsForm extends FormBase
         $form = array();
         $conditions = legal_get_conditions();
 
-        if ($this->moduleHandler->moduleExists('locale')) {
+        if ($this->moduleHandler->moduleExists('language')) {
+        //todo find a better solution
+            $langcode = $this->languageManager->getCurrentLanguage()->getId();
+            $conditions = legal_get_conditions($langcode);
+
             foreach ($this->languageManager->getLanguages() as $key => $object) {
                 $languages[$key] = $object->getName();
             }
-            $language_default = $this->languageManager->getDefaultLanguage();
-            $language = $language_default->getId();
+            $language = $langcode;
             $version_options = array('version' => t('All users (new version)'), 'revision' => t('Language specific users (a revision)'));
             $version_handling = 'version';
         } else {
