@@ -138,17 +138,11 @@ class LegalLogin extends FormBase
         legal_save_accept($values['version'], $values['revision'], $values['language'], $uid);
         $this->logger('legal')->notice('%name accepted T&C version %tc_id.', array('%name' => $user->get('name')->getString(), '%tc_id' => $values['tc_id']));
 
-        // Update the user table timestamp noting user has logged in.
-        db_update('users_field_data')
-            ->fields(array('login' => time()))
-            ->condition('uid', $uid)
-            ->execute();
-
         // User has new permissions, so we clear their menu cache.
         \Drupal::cache('menu')->delete($uid);
 
-        \Drupal::service('session')->set('uid', $user->id());
-        \Drupal::moduleHandler()->invokeAll('user_login', array($user));
+        // Log user in.
+        user_login_finalize($user);
     }
 
     /**
