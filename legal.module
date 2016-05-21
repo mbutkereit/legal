@@ -198,7 +198,7 @@ function legal_form_user_register_form_alter(&$form, FormStateInterface $form_st
     // Disable checkbox if:
     //  - user is already registered (administer users);
     //  - users with 'administer users' can access registration on admin/user/user/create.
-    if (!empty($user->uid)) {
+    if (!empty($user->id())) {
         $form['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
         $form['legal']['legal_accept']['#required'] = FALSE;
 
