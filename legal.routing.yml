@@ -32,6 +32,6 @@ legal.legal_login:
     _form: '\Drupal\legal\Form\LegalLogin'
     _title: 'Terms and Conditions'
   requirements:
-    _permission: 'access content'
+    _permission: 'view Terms and Conditions'
   options:
     user: \d+
