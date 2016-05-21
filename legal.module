@@ -23,7 +23,7 @@ function legal_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route
             break;
         case 'legal.config_legal':
             $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register. A <a href="@page">page</a> displaying your T&C will be automatically created, access to this page can be set via the <a href="@access">permissions</a> administration page.',
-                array('@page' => \Drupal::urlGenerator()->generate('legal.legal')->toString(), '@access' => \Drupal::urlGenerator()->generate('user.admin_permissions')->toString()));
+                array('@page' => \Drupal::urlGenerator()->generate('legal.legal'), '@access' => \Drupal::urlGenerator()->generate('user.admin_permissions')));
     }
 
     return $output;
