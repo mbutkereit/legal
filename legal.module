@@ -23,7 +23,7 @@ function legal_help($route_name, \Drupal\Core\Routing\RouteMatchInterface $route
             break;
         case 'legal.config_legal':
             $output .= t('Display a Terms & Conditions statement on the registration page, require visitor to accept the T&C to register. A <a href="@page">page</a> displaying your T&C will be automatically created, access to this page can be set via the <a href="@access">permissions</a> administration page.',
-                array('@page' => \Drupal::urlGenerator()->generate('legal.legal')->toString(), '@access' => \Drupal::urlGenerator()->generate('user.admin_permissions')->toString()));
+                array('@page' => \Drupal::urlGenerator()->generate('legal.legal'), '@access' => \Drupal::urlGenerator()->generate('user.admin_permissions')));
     }
 
     return $output;
@@ -198,7 +198,7 @@ function legal_form_user_register_form_alter(&$form, FormStateInterface $form_st
     // Disable checkbox if:
     //  - user is already registered (administer users);
     //  - users with 'administer users' can access registration on admin/user/user/create.
-    if (!empty($user->uid)) {
+    if (!empty($user->id())) {
         $form['legal']['legal_accept']['#attributes'] = array('disabled' => 'disabled');
         $form['legal']['legal_accept']['#required'] = FALSE;
 
@@ -672,7 +672,7 @@ function legal_preview($form, FormStateInterface $form_values)
                 '#name' => 'preview',
                 '#type' => 'textarea',
                 '#title' => t('Terms & Conditions'),
-                '#value' => $form['conditions']['#value'],
+                '#value' => isset($form['conditions']['#value']) ? $form['conditions']['#value'] : NULL ,
                 '#parents' => array('legal'),
                 '#rows' => 10,
                 '#attributes' => array('readonly' => 'readonly'),
